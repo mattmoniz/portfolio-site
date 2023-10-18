@@ -5,7 +5,7 @@ import {
   About,
   Contact,
   Experience,
-  Feedbacks,
+  Feedback,
   Hero,
   Navbar,
   Tech,
@@ -25,7 +25,8 @@ const App = () => {
         <Experience />
         <Tech />
         <Projects />
-        <Feedbacks />
+        {/* Omitted Feedback for now. Might use in the future. */}
+        {/* <Feedback /> */}
         <div className="relative z-0">
           <Contact />
           <StarsCanvas />
