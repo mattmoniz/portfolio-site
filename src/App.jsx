@@ -10,7 +10,6 @@ import {
   Navbar,
   Tech,
   Projects,
-  StarsCanvas,
 } from "./components";
 
 const App = () => {
@@ -29,7 +28,6 @@ const App = () => {
         {/* <Feedback /> */}
         <div className="relative z-0">
           <Contact />
-          <StarsCanvas />
         </div>
       </div>
     </BrowserRouter>
