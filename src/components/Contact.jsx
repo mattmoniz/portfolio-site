@@ -8,7 +8,7 @@ import { slideIn } from "../utils/motion";
 
 const Contact = () => {
   const formRef = useRef();
-  const [form, setform] = useState({
+  const [form, setForm] = useState({
     name: "",
     email: "",
     message: "",
@@ -16,9 +16,9 @@ const Contact = () => {
   const [loading, setloading] = useState(false);
 
   const handleChange = (e) => {
-    const {target} = e;
+    const { target } = e;
     const { name, value } = target;
-    setform({ ...form, [name]: value });
+    setForm({ ...form, [name]: value });
   };
 
   const handleSubmit = (e) => {
@@ -27,30 +27,33 @@ const Contact = () => {
 
     emailjs
       .send(
-        "service_x2z161r",
-        "template_ck2ardf",
+        import.meta.env.VITE_EMAILJS_SERVICE_ID,
+        import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
         {
           from_name: form.name,
-          to_name: "Matthew",
+          to_name: "Matthew Moniz",
           from_email: form.email,
           to_email: "monizri@gmail.com",
           message: form.message,
         },
-        "ksiZ0qgTCY2e-5gho"
+        import.meta.env.VITE_EMAILJS_PUBLIC_KEY_ID
       )
-      .then(() => {
-        setloading(false);
-        alert("Thank You. I will get back to you as soon as possible.");
-        setform({
-          name:'',
-          email:'',
-          message:''
-        });
-      }, (err) =>{
-        setloading(false);
-        console.log(err);
-        alert('Something went wrong')
-      })
+      .then(
+        () => {
+          setloading(false);
+          alert("Thank You. I will get back to you as soon as possible.");
+          setForm({
+            name: "",
+            email: "",
+            message: "",
+          });
+        },
+        (err) => {
+          setloading(false);
+          console.log(err);
+          alert("Something went wrong");
+        }
+      );
   };
 
   return (
@@ -70,7 +73,7 @@ const Contact = () => {
             <span className="text-white font-medium mb-4"> Your Name</span>
             <input
               type="text"
-              name="button"
+              name="name"
               value={form.name}
               onChange={handleChange}
               placeholder="What's your name?"
@@ -94,8 +97,7 @@ const Contact = () => {
             <span className="text-white font-medium mb-4"> Message</span>
             <textarea
               rows="7"
-              type="email"
-              name="email"
+              name="message"
               value={form.message}
               onChange={handleChange}
               placeholder="Feel free to reach out via email"
