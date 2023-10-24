@@ -119,7 +119,7 @@ const experiences = [
     ],
   },
   {
-    title: "Full Stack Developer - Apprentice",
+    title: "Full Stack Developer",
     company_name: "Launch Academy",
     icon: launchacademy,
     iconBg: "#383E56",
