@@ -14,40 +14,47 @@ const ProjectCard = ({
   tags,
   image,
   source_code_link,
-  project_url
+  project_url,
 }) => {
   return (
     <motion.div variants={fadeIn("up", "spring", index * 0.5, 0.75)}>
-      <div className="bg-tertiary hover:bg-[#5b576e] p-5 rounded-2xl sm:w-[360px] w-full mt-10 ">
+      <div className="bg-tertiary  p-5 rounded-2xl sm:w-[360px] w-full mt-10  hover:bg-[#3a2148]">
         <div className="relative w-full h-[230px]">
           <img
             src={image}
             alt={name}
-            className="w-full h-full object-cover rounded-2xl cursor-pointer group-hover:opacity-50"
-            onClick={() => window.open(project_url, "_blank")}
+            className="w-full h-full object-cover rounded-2xl"
           />
         </div>
         <div className="mt-5 relative">
           <h3 className="text-white font-bold text-[24px]">{name}</h3>
           <p className="mt-2 text-secondary text-[14px]">{description}</p>
         </div>
-        <div className="mt-4 flex flex-wrap gap-3">
-          {tags.map((tag) => (
-            <p key={tag.name} className={`text-[14px] ${tag.color}`}>
-              #{tag.name}
-            </p>
-          ))}
-        </div>
-        <div className="relative m-3 ">
+
+        <div className="relative m-5 ">
+          <button
+            className="text-white font-bold py-2 px-4 rounded cursor-pointer hover:bg-[#393356] border border-bg-[#5b576e] top-0 left-0"
+            onClick={() => window.open(project_url, "_blank")}
+            cursor-pointer
+          >
+            Visit Project
+          </button>
           <div
             onClick={() => window.open(source_code_link, "_blank")}
-            className="black-gradient w-12 h-12 rounded-full flex justify-center items-center cursor-pointer absolute bottom-0 right-0 "
+            className="bg-black border-b-gray-200 hover:bg-[#393356]  w-12 h-12 rounded-full flex justify-center items-center cursor-pointer absolute top-0 right-0"
           >
             <img
               src={github}
               alt="github"
               className="w-1/2 h-1/2 object-contain "
             />
+          </div>
+          <div className="mt-4 flex flex-wrap gap-3">
+            {tags.map((tag) => (
+              <p key={tag.name} className={`text-[14px] ${tag.color}`}>
+                #{tag.name}
+              </p>
+            ))}
           </div>
         </div>
       </div>
@@ -59,7 +66,6 @@ const Projects = () => {
   return (
     <>
       <motion.div variants={textVariant()}>
-        {/* <p className={styles.sectionSubText}>What have I done so far.</p> */}
         <h2 className={styles.sectionHeadText}>Projects.</h2>
       </motion.div>
       <div className="w-full flex">
