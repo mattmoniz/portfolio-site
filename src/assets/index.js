@@ -20,6 +20,7 @@ import redux from "./tech/redux.png";
 import tailwind from "./tech/tailwind.png";
 import typescript from "./tech/typescript.png";
 import threejs from "./tech/threejs.svg";
+import storybook from "./tech/storybook.png";
 
 import meta from "./company/meta.png";
 import shopify from "./company/shopify.png";
@@ -29,6 +30,16 @@ import tesla from "./company/tesla.png";
 import carrent from "./carrent.png";
 import jobit from "./jobit.png";
 import tripguide from "./tripguide.png";
+
+import modernReactSite from "./modernReactSite.png";
+import ecommerce from "./ecommerce.png";
+import crowdFundingBlockChain from "./crowdFundingBlockChain.png";
+
+
+import fastforward from "./company/fastforward.png";
+import launchacademy from "./company/LaunchAcademy.png";
+import monsterworldwide from "./company/monster.png";
+import citizens from "./company/citizens.png";
 
 export {
   logoColor,
@@ -59,4 +70,13 @@ export {
   carrent,
   jobit,
   tripguide,
+  fastforward,
+  launchacademy,
+  monsterworldwide,
+  citizens,
+  storybook,
+  modernReactSite,
+  ecommerce,
+  crowdFundingBlockChain
+
 };

@@ -4,25 +4,25 @@ import {
   creator,
   web,
   javascript,
-  typescript,
   html,
   css,
   reactjs,
   redux,
   tailwind,
   nodejs,
-  mongodb,
   git,
-  figma,
   docker,
-  meta,
-  starbucks,
-  tesla,
-  shopify,
   carrent,
   jobit,
   tripguide,
-  threejs,
+  fastforward,
+  launchacademy,
+  monsterworldwide,
+  citizens,
+  storybook,
+  modernReactSite,
+  ecommerce,
+  crowdFundingBlockChain
 } from "../assets";
 
 export const navLinks = [
@@ -73,10 +73,6 @@ const technologies = [
     icon: javascript,
   },
   {
-    name: "TypeScript",
-    icon: typescript,
-  },
-  {
     name: "React JS",
     icon: reactjs,
   },
@@ -85,7 +81,7 @@ const technologies = [
     icon: redux,
   },
   {
-    name: "Tailwind CSS",
+    name: "Tailwind",
     icon: tailwind,
   },
   {
@@ -93,78 +89,68 @@ const technologies = [
     icon: nodejs,
   },
   {
-    name: "MongoDB",
-    icon: mongodb,
-  },
-  {
-    name: "Three JS",
-    icon: threejs,
-  },
-  {
     name: "git",
     icon: git,
-  },
-  {
-    name: "figma",
-    icon: figma,
   },
   {
     name: "docker",
     icon: docker,
   },
+  {
+    name: "storybook",
+    icon: storybook,
+  },
 ];
 
 const experiences = [
   {
-    title: "React.js Developer",
-    company_name: "Starbucks",
-    icon: starbucks,
+    title: "Front End Developer",
+    company_name: "Fast Forward",
+    icon: fastforward,
     iconBg: "#383E56",
-    date: "March 2020 - April 2021",
+    date: "Nov 2020 - Mar 2023",
     bullets: [
-      "Developing and maintaining web applications using React.js and other related technologies.",
-      "Collaborating with cross-functional teams including designers, product managers, and other developers to create high-quality products.",
+      "Built three large healthcare calculators apps used by over 1500 sales reps using React, CSS and Redux.",
+      "Cut development time in half by building a component library Storybook and Material UI",
+      "Supported a large enterprise website Boston-area hospital with over 300,000 monthly visitors. Worked with stakeholders to incorporate their needs and demo changes.",
+      "Built over 20 different CI/CD pipelines for 7 sites using Azure DevOps. Pipelines kicked off visual regression testing and greatly improved release quality.",
+      "Collaborating with cross-functional teams including designers,and other developers to create high-quality products.",
       "Implementing responsive design and ensuring cross-browser compatibility.",
-      "Participating in code reviews and providing constructive feedback to other developers.",
     ],
   },
   {
-    title: "React Native Developer",
-    company_name: "Tesla",
-    icon: tesla,
-    iconBg: "#E6DEDD",
-    date: "Jan 2021 - Feb 2022",
-    bullets: [
-      "Developing and maintaining web applications using React.js and other related technologies.",
-      "Collaborating with cross-functional teams including designers, product managers, and other developers to create high-quality products.",
-      "Implementing responsive design and ensuring cross-browser compatibility.",
-      "Participating in code reviews and providing constructive feedback to other developers.",
-    ],
-  },
-  {
-    title: "Web Developer",
-    company_name: "Shopify",
-    icon: shopify,
+    title: "Full Stack Developer - Apprentice",
+    company_name: "Launch Academy",
+    icon: launchacademy,
     iconBg: "#383E56",
-    date: "Jan 2022 - Jan 2023",
+    date: "March 2020 - June 2020",
     bullets: [
-      "Developing and maintaining web applications using React.js and other related technologies.",
-      "Collaborating with cross-functional teams including designers, product managers, and other developers to create high-quality products.",
-      "Implementing responsive design and ensuring cross-browser compatibility.",
-      "Participating in code reviews and providing constructive feedback to other developers.",
+      "Participated in an intensive web development bootcamp practicing full-stack development.",
+      "Built web apps using ReactJS and Utilized CSS/SCSS with Foundation for styling.",
+      "Developed a Rails back-end with PostgreSQL database and serialized API endpoints.",
     ],
   },
   {
-    title: "Full stack Developer",
-    company_name: "Meta",
-    icon: meta,
+    title: "Sales Operations Analyst",
+    company_name: "Monster Worldwide",
+    icon: monsterworldwide,
     iconBg: "#E6DEDD",
-    date: "Jan 2023 - Present",
+    date: "Apr 2015 - Oct 2019",
     bullets: [
-      "Developing and maintaining web applications using React.js and other related technologies.",
-      "Collaborating with cross-functional teams including designers, product managers, and other developers to create high-quality products.",
-      "Implementing responsive design and ensuring cross-browser compatibility.",
-      "Participating in code reviews and providing constructive feedback to other developers.",
+      "Cut Support requests by 70% by analyzing order data using Salesforce and VBA skills to point out bottlenecks in Salesforce adoption.",
+      "Designed and executed end to end testing for recent Salesforce Lightning deployment.",
+      "Worked on a cross-functional Agile SCRUM team to address impending issues or initiatives logged in JIRA.",
+    ],
+  },
+  {
+    title: "Business Analyst",
+    company_name: "Citizens Financial Group",
+    icon: citizens,
+    iconBg: "#E6DEDD",
+    date: "Jan 2007 - Oct 2014",
+    bullets: [
+      "Reduced processing time by 80%, after Access databases needed to monitor and report portfolio analytics monthly.",
+      "Defined, researched, and resolved miscellaneous trade and asset issues with brokers and internal customers.",
     ],
   },
 ];
@@ -172,7 +158,7 @@ const experiences = [
 const testimonials = [
   {
     testimonial:
-      "I thought it was impossible to make a website as beautiful as our product, but Rick proved me wrong.",
+      "I thought it was impossible to make a website as beautiful as our product, but RickTesmin proved me wrong.",
     name: "Sara Lee",
     designation: "CFO",
     company: "Acme Co",
@@ -198,67 +184,65 @@ const testimonials = [
 
 const projects = [
   {
-    name: "Car Rent",
-    description:
-      "Web-based platform that allows users to search, book, and manage car rentals from various providers, providing a convenient and efficient solution for transportation needs.",
+    name: "Modern React Landing Page",
+    description: "Modern example of a single React Landing Page.",
     tags: [
       {
         name: "react",
         color: "blue-text-gradient",
-      },
-      {
-        name: "mongodb",
-        color: "green-text-gradient",
       },
       {
         name: "tailwind",
         color: "pink-text-gradient",
       },
     ],
-    image: carrent,
-    source_code_link: "https://github.com/",
+    image: modernReactSite,
+    source_code_link: "https://github.com/mattmoniz/modern_react_website",
+    project_url: "https://main.dy8ptiuetuxsx.amplifyapp.com/",
   },
   {
-    name: "Job IT",
+    name: "ecommerce site",
     description:
-      "Web application that enables users to search for job openings, view estimated salary ranges for positions, and locate available jobs based on their current location.",
+      "Modern Ecommerce site built using NextJS for the front end and I built a Content Management System using Sanity. Finally, I was able to implement payment functionality using Stripe's API.",
     tags: [
       {
-        name: "react",
+        name: "NextJS",
         color: "blue-text-gradient",
       },
       {
-        name: "restapi",
+        name: "Sanity CMS",
         color: "green-text-gradient",
       },
       {
-        name: "scss",
+        name: "Stripe",
         color: "pink-text-gradient",
       },
     ],
-    image: jobit,
-    source_code_link: "https://github.com/",
+    image: ecommerce,
+    source_code_link: "https://github.com/mattmoniz/nextjs-ecommerce-app",
+    project_url: "https://ecommerce-app-mattmoniz.vercel.app/",
   },
   {
-    name: "Trip Guide",
+    name: "Blockchain Crowdfunding site",
     description:
-      "A comprehensive travel booking platform that allows users to book flights, hotels, and rental cars, and offers curated recommendations for popular destinations.",
+      "Demo Blockchain crowd funding site which allows users to create ro donate to demo campaigns using fake cryptocurrency.",
     tags: [
       {
-        name: "nextjs",
+        name: "React",
         color: "blue-text-gradient",
       },
       {
-        name: "supabase",
+        name: "thirdweb",
         color: "green-text-gradient",
       },
       {
-        name: "css",
+        name: "Tailwind",
         color: "pink-text-gradient",
       },
     ],
-    image: tripguide,
-    source_code_link: "https://github.com/",
+    image: crowdFundingBlockChain,
+    source_code_link: "https://github.com/mattmoniz/Crowdfunding-Blockchain",
+    project_url: "https://samplecryptoapp.com/",
   },
 ];
 
