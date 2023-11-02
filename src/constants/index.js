@@ -22,7 +22,8 @@ import {
   storybook,
   modernReactSite,
   ecommerce,
-  crowdFundingBlockChain
+  crowdFundingBlockChain,
+  openAIArticleSummary,
 } from "../assets";
 
 export const navLinks = [
@@ -243,6 +244,28 @@ const projects = [
     image: crowdFundingBlockChain,
     source_code_link: "https://github.com/mattmoniz/Crowdfunding-Blockchain",
     project_url: "https://samplecryptoapp.com/",
+  },
+  {
+    name: "OpenAI Article Summarizer",
+    description:
+      "This page takes a URL to an lengthy article and summarizes it ",
+    tags: [
+      {
+        name: "React",
+        color: "blue-text-gradient",
+      },
+      {
+        name: "OpenAI",
+        color: "green-text-gradient",
+      },
+      {
+        name: "Tailwind",
+        color: "pink-text-gradient",
+      },
+    ],
+    image: openAIArticleSummary,
+    source_code_link: "https://github.com/mattmoniz/ai-reader",
+    project_url: "https://lucky-marzipan-55ba96.netlify.app/",
   },
 ];
 

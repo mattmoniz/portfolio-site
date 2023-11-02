@@ -34,6 +34,7 @@ import tripguide from "./tripguide.png";
 import modernReactSite from "./modernReactSite.png";
 import ecommerce from "./ecommerce.png";
 import crowdFundingBlockChain from "./crowdFundingBlockChain.png";
+import openAIArticleSummary from "./openAIArticleSummary.png";
 
 
 import fastforward from "./company/fastforward.png";
@@ -77,6 +78,6 @@ export {
   storybook,
   modernReactSite,
   ecommerce,
-  crowdFundingBlockChain
-
+  crowdFundingBlockChain,
+  openAIArticleSummary,
 };
