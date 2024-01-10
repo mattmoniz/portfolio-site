@@ -243,7 +243,7 @@ const projects = [
     ],
     image: crowdFundingBlockChain,
     source_code_link: "https://github.com/mattmoniz/Crowdfunding-Blockchain",
-    project_url: "https://samplecryptoapp.com/",
+    project_url: "https://mellifluous-centaur-e8704e.netlify.app/",
   },
   {
     name: "OpenAI Article Summarizer",
