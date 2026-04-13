@@ -9,7 +9,7 @@ import { SectionWrapper } from "../hoc";
 const About = () => {
   return (
       <div
-        className="mt-20 text-secondary text-[17px] max-w-3xl leading-[30px] ml-10"
+        className="mt-20 text-secondary text-[17px] max-w-3xl leading-[30px] sm:ml-10"
       >
         I'm a skilled software developer with experience in Javascript and
         experience in libraries like React and frameworks like Gatsby. I also have experience
