@@ -11,18 +11,20 @@ const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
+    let timeoutId;
     const handleScroll = () => {
-      const scrollTop = window.scrollY;
-      if (scrollTop > 100) {
-        setScrolled(true);
-      } else {
-        setScrolled(false);
-      }
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        setScrolled(window.scrollY > 100);
+      }, 50);
     };
 
     window.addEventListener("scroll", handleScroll);
 
-    return () => window.removeEventListener("scroll", handleScroll);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   return (
@@ -68,12 +70,17 @@ const Navbar = () => {
         </ul>
 
         <div className="sm:hidden flex flex-1 justify-end items-center">
-          <img
-            src={toggle ? close : menu}
-            alt="menu"
-            className="w-[28px] h-[28px] object-contain"
+          <button
             onClick={() => setToggle(!toggle)}
-          />
+            aria-label={toggle ? "Close menu" : "Open menu"}
+            className="bg-transparent border-none p-0"
+          >
+            <img
+              src={toggle ? close : menu}
+              alt=""
+              className="w-[28px] h-[28px] object-contain"
+            />
+          </button>
 
           <div
             className={`${

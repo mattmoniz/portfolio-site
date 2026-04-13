@@ -23,6 +23,7 @@ const ProjectCard = ({
           <img
             src={image}
             alt={name}
+            loading="lazy"
             className="w-full h-full object-cover rounded-2xl"
           />
         </div>
@@ -33,15 +34,14 @@ const ProjectCard = ({
 
         <div className="relative m-5 ">
           <button
-            className="text-white font-bold py-2 px-4 rounded cursor-pointer hover:bg-[#393356] border border-bg-[#5b576e] top-0 left-0"
+            className="text-white font-bold py-2 px-4 rounded cursor-pointer hover:bg-[#393356] border border-[#5b576e] top-0 left-0"
             onClick={() => window.open(project_url, "_blank")}
-            cursor-pointer
           >
             Visit Project
           </button>
           <div
             onClick={() => window.open(source_code_link, "_blank")}
-            className="bg-black border-b-gray-200 hover:bg-[#393356]  w-12 h-12 rounded-full flex justify-center items-center cursor-pointer absolute top-0 right-0"
+            className="bg-black border border-gray-200 hover:bg-[#393356] w-12 h-12 rounded-full flex justify-center items-center cursor-pointer absolute top-0 right-0"
           >
             <img
               src={github}

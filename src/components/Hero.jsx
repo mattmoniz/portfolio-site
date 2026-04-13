@@ -20,7 +20,7 @@ const Hero = () => {
           </h1>
           <p className={`${styles.heroSubText} mt-2 text-white-100`}>
             I'm a web developer specializing in Javascript applications{" "}
-            <br className="sm:block-hidden" />
+            <br className="hidden sm:block" />
             using libraries like React.
           </p>
         </div>

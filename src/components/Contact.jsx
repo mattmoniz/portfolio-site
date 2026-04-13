@@ -69,38 +69,46 @@ const Contact = () => {
           onSubmit={handleSubmit}
           className="mt-12 flex flex-col gap-8"
         >
-          <label className="flex flex-col">
-            <span className="text-white font-medium mb-4"> Your Name</span>
+          <label htmlFor="name" className="flex flex-col">
+            <span className="text-white font-medium mb-4">Your Name</span>
             <input
+              id="name"
               type="text"
               name="name"
               value={form.name}
               onChange={handleChange}
               placeholder="What's your name?"
+              required
+              minLength={2}
               className="bg-tertiary py-4 px-6 rounded-lg outline-none border-none font-medium"
             />
           </label>
 
-          <label className="flex flex-col">
-            <span className="text-white font-medium mb-4"> Email Address</span>
+          <label htmlFor="email" className="flex flex-col">
+            <span className="text-white font-medium mb-4">Email Address</span>
             <input
+              id="email"
               type="email"
               name="email"
               value={form.email}
               onChange={handleChange}
               placeholder="What's your email address?"
+              required
               className="bg-tertiary py-4 px-6 rounded-lg outline-none border-none font-medium"
             />
           </label>
 
-          <label className="flex flex-col">
-            <span className="text-white font-medium mb-4"> Message</span>
+          <label htmlFor="message" className="flex flex-col">
+            <span className="text-white font-medium mb-4">Message</span>
             <textarea
+              id="message"
               rows="7"
               name="message"
               value={form.message}
               onChange={handleChange}
               placeholder="Feel free to reach out via email"
+              required
+              minLength={10}
               className="bg-tertiary py-4 px-6 rounded-lg outline-none border-none font-medium"
             />
           </label>
