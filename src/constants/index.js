@@ -157,17 +157,16 @@ const experiences = [
     ],
   },
   {
-    title: "Freelance Handyman",
+    title: "Freelance Handyman & Landscaper",
     company_name: "Self-Employed",
     icon: creator,
     iconBg: "#383E56",
     date: "2023 - Present",
     bullets: [
-      "Interior painting including full room prep, patching, priming, and finish coats.",
-      "Electrical work including replacing outlets, switches, and light fixtures safely and to code.",
-      "Exterior trim replacement and repair to improve curb appeal and weather resistance.",
-      "Built custom outdoor playsets for kids, managing full builds from planning to completion.",
-      "Designed and built raised plant beds and vegetable gardens, combining functional design with a love of outdoor projects.",
+      "Took on a wide range of home improvement projects including interior painting, electrical work (outlets, switches, light fixtures), and exterior trim replacement.",
+      "Built custom outdoor playsets from the ground up — handling everything from design to the final build.",
+      "Designed and constructed raised garden beds and vegetable gardens, combining a love of outdoor work with practical results.",
+      "Comfortable jumping between skilled trades and physical labor — if something needs fixing or building, it gets done.",
     ],
   },
 ];
