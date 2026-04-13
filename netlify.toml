@@ -1,0 +1,24 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    # Prevent your site being embedded in iframes on other sites (clickjacking)
+    X-Frame-Options = "DENY"
+
+    # Prevent browsers guessing file types (MIME sniffing attacks)
+    X-Content-Type-Options = "nosniff"
+
+    # Control how much referrer info is sent when clicking links
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+    # Force HTTPS for 1 year
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
+
+    # Disable access to camera, mic, location — not needed on a portfolio
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=()"
+
+    # Only allow resources from these sources
+    Content-Security-Policy = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://api.emailjs.com; img-src 'self' data: https://randomuser.me blob:; worker-src blob:;"
