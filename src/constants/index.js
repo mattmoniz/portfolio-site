@@ -107,6 +107,19 @@ const technologies = [
 
 const experiences = [
   {
+    title: "Freelance Handyman & Landscaper",
+    company_name: "Self-Employed",
+    icon: creator,
+    iconBg: "#383E56",
+    date: "2023 - Present",
+    bullets: [
+      "Took on a wide range of home improvement projects including interior painting, electrical work (outlets, switches, light fixtures), and exterior trim replacement.",
+      "Built custom outdoor playsets from the ground up — handling everything from design to the final build.",
+      "Designed and constructed raised garden beds and vegetable gardens, combining a love of outdoor work with practical results.",
+      "Comfortable jumping between skilled trades and physical labor — if something needs fixing or building, it gets done.",
+    ],
+  },
+  {
     title: "Front End Developer",
     company_name: "Fast Forward",
     icon: fastforward,
@@ -154,19 +167,6 @@ const experiences = [
     bullets: [
       "Reduced processing time by 80%, after Access databases needed to monitor and report portfolio analytics monthly.",
       "Defined, researched, and resolved miscellaneous trade and asset issues with brokers and internal customers.",
-    ],
-  },
-  {
-    title: "Freelance Handyman & Landscaper",
-    company_name: "Self-Employed",
-    icon: creator,
-    iconBg: "#383E56",
-    date: "2023 - Present",
-    bullets: [
-      "Took on a wide range of home improvement projects including interior painting, electrical work (outlets, switches, light fixtures), and exterior trim replacement.",
-      "Built custom outdoor playsets from the ground up — handling everything from design to the final build.",
-      "Designed and constructed raised garden beds and vegetable gardens, combining a love of outdoor work with practical results.",
-      "Comfortable jumping between skilled trades and physical labor — if something needs fixing or building, it gets done.",
     ],
   },
 ];
