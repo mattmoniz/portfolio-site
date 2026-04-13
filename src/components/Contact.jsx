@@ -13,7 +13,7 @@ const Contact = () => {
     email: "",
     message: "",
   });
-  const [loading, setloading] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     const { target } = e;
@@ -23,7 +23,7 @@ const Contact = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    setloading(true);
+    setLoading(true);
 
     emailjs
       .send(
@@ -40,7 +40,7 @@ const Contact = () => {
       )
       .then(
         () => {
-          setloading(false);
+          setLoading(false);
           alert("Thank You. I will get back to you as soon as possible.");
           setForm({
             name: "",
@@ -49,7 +49,7 @@ const Contact = () => {
           });
         },
         (err) => {
-          setloading(false);
+          setLoading(false);
           console.log(err);
           alert("Something went wrong");
         }
@@ -77,7 +77,7 @@ const Contact = () => {
               value={form.name}
               onChange={handleChange}
               placeholder="What's your name?"
-              className="bg-tertiary py-4 px-6 rounded-lg outlined-none border-none font-medium"
+              className="bg-tertiary py-4 px-6 rounded-lg outline-none border-none font-medium"
             />
           </label>
 
@@ -89,7 +89,7 @@ const Contact = () => {
               value={form.email}
               onChange={handleChange}
               placeholder="What's your email address?"
-              className="bg-tertiary py-4 px-6 rounded-lg outlined-none border-none font-medium"
+              className="bg-tertiary py-4 px-6 rounded-lg outline-none border-none font-medium"
             />
           </label>
 
@@ -101,7 +101,7 @@ const Contact = () => {
               value={form.message}
               onChange={handleChange}
               placeholder="Feel free to reach out via email"
-              className="bg-tertiary py-4 px-6 rounded-lg outlined-none border-none font-medium"
+              className="bg-tertiary py-4 px-6 rounded-lg outline-none border-none font-medium"
             />
           </label>
           <button
