@@ -26,6 +26,8 @@ import {
   openAIArticleSummary,
 } from "../assets";
 
+// TODO: Replace creator icon with a handyman/tools image
+
 export const navLinks = [
   {
     id: "about",
@@ -152,6 +154,20 @@ const experiences = [
     bullets: [
       "Reduced processing time by 80%, after Access databases needed to monitor and report portfolio analytics monthly.",
       "Defined, researched, and resolved miscellaneous trade and asset issues with brokers and internal customers.",
+    ],
+  },
+  {
+    title: "Freelance Handyman",
+    company_name: "Self-Employed",
+    icon: creator,
+    iconBg: "#383E56",
+    date: "2023 - Present",
+    bullets: [
+      "Interior painting including full room prep, patching, priming, and finish coats.",
+      "Electrical work including replacing outlets, switches, and light fixtures safely and to code.",
+      "Exterior trim replacement and repair to improve curb appeal and weather resistance.",
+      "Built custom outdoor playsets for kids, managing full builds from planning to completion.",
+      "Designed and built raised plant beds and vegetable gardens, combining functional design with a love of outdoor projects.",
     ],
   },
 ];
