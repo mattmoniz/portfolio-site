@@ -39,15 +39,15 @@ const photos = [
   { src: downstairsBathroom1, category: "Downstairs Bathroom", label: "Downstairs Bathroom Remodel" },
   { src: downstairsBathroom2, category: "Downstairs Bathroom", label: "Downstairs Bathroom Remodel" },
   { src: downstairsBathroom3, category: "Downstairs Bathroom", label: "Downstairs Bathroom Remodel" },
+  { src: staircase7,      category: "Staircase",         label: "Staircase" },
+  { src: staircase8,      category: "Staircase",         label: "Staircase" },
+  { src: staircase9,      category: "Staircase",         label: "Staircase" },
   { src: staircase1,      category: "Staircase",         label: "Staircase" },
   { src: staircase2,      category: "Staircase",         label: "Staircase" },
   { src: staircase3,      category: "Staircase",         label: "Staircase" },
   { src: staircase4,      category: "Staircase",         label: "Staircase" },
   { src: staircase5,      category: "Staircase",         label: "Staircase" },
   { src: staircase6,      category: "Staircase",         label: "Staircase" },
-  { src: staircase7,      category: "Staircase",         label: "Staircase" },
-  { src: staircase8,      category: "Staircase",         label: "Staircase" },
-  { src: staircase9,      category: "Staircase",         label: "Staircase" },
 ];
 
 const categories = ["All", "Bathroom & Vanity", "Downstairs Bathroom", "Staircase", "Play Area", "Garden & Fence"];
