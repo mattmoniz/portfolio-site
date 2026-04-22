@@ -6,6 +6,7 @@ import bathroomVanity1 from "../assets/handyman/bathroom-vanity-1.jpg";
 import bathroomVanity2 from "../assets/handyman/bathroom-vanity-2.jpg";
 import bathroomVanity3 from "../assets/handyman/bathroom-vanity-3.jpg";
 import bathroomVanity4 from "../assets/handyman/bathroom-vanity-4.jpg";
+import bathroomVanity5 from "../assets/handyman/bathroom-vanity-5.jpg";
 import playarea1 from "../assets/handyman/playarea-1.jpg";
 import playarea2 from "../assets/handyman/playarea-2.jpg";
 import raisedBed1 from "../assets/handyman/raised-bed-1.jpg";
@@ -29,6 +30,7 @@ const photos = [
   { src: bathroomVanity2, category: "Bathroom & Vanity", label: "Bathroom & Vanity Remodel" },
   { src: bathroomVanity3, category: "Bathroom & Vanity", label: "Bathroom & Vanity Remodel" },
   { src: bathroomVanity4, category: "Bathroom & Vanity", label: "Bathroom & Vanity Remodel" },
+  { src: bathroomVanity5, category: "Bathroom & Vanity", label: "Bathroom & Vanity Remodel" },
   { src: playarea1,       category: "Play Area",         label: "Play Area Build" },
   { src: playarea2,       category: "Play Area",         label: "Play Area Build" },
   { src: raisedBed1,      category: "Garden & Fence",    label: "Raised Bed Garden & Fence" },
@@ -77,11 +79,11 @@ const Handyman = () => {
       {/* Hero */}
       <section className={`${styles.paddingX} pt-28 pb-10 max-w-7xl mx-auto`}>
         <h1 className={`${styles.heroHeadText} text-white`}>
-          Handyman &amp; <span className="text-[#915eff]">Landscaper</span>
+          Handyman <span className="text-[#915eff]">Work Examples</span>
         </h1>
         <p className={`${styles.heroSubText} mt-4 text-white-100 max-w-3xl`}>
-          When I'm not writing code, I'm building, fixing, and growing things.
-          From bathroom remodels to raised garden beds — if it needs doing, I figure it out.
+          A collection of hands-on projects I've taken on — from bathroom remodels
+          and staircases to raised garden beds and custom play areas. Built with care, start to finish.
         </p>
       </section>
 
