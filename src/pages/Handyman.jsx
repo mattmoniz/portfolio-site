@@ -9,7 +9,6 @@ import bathroomVanity4 from "../assets/handyman/bathroom-vanity-4.jpg";
 import playarea1 from "../assets/handyman/playarea-1.jpg";
 import playarea2 from "../assets/handyman/playarea-2.jpg";
 import raisedBed1 from "../assets/handyman/raised-bed-1.jpg";
-import raisedBed2 from "../assets/handyman/raised-bed-2.jpg";
 import raisedBed3 from "../assets/handyman/raised-bed-3.jpg";
 import raisedBed4 from "../assets/handyman/raised-bed-4.jpg";
 import downstairsBathroom1 from "../assets/handyman/downstairs-bathroom-1.jpg";
@@ -33,7 +32,6 @@ const photos = [
   { src: playarea1,       category: "Play Area",         label: "Play Area Build" },
   { src: playarea2,       category: "Play Area",         label: "Play Area Build" },
   { src: raisedBed1,      category: "Garden & Fence",    label: "Raised Bed Garden & Fence" },
-  { src: raisedBed2,      category: "Garden & Fence",    label: "Raised Bed Garden & Fence" },
   { src: raisedBed3,      category: "Garden & Fence",    label: "Raised Bed Garden & Fence" },
   { src: raisedBed4,      category: "Garden & Fence",    label: "Raised Bed Garden & Fence" },
   { src: downstairsBathroom1, category: "Downstairs Bathroom", label: "Downstairs Bathroom Remodel" },
