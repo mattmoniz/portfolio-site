@@ -26,11 +26,11 @@ import staircase8 from "../assets/handyman/staircase-8.jpg";
 import staircase9 from "../assets/handyman/staircase-9.jpg";
 
 const photos = [
+  { src: bathroomVanity5, category: "Bathroom & Vanity", label: "Bathroom & Vanity Remodel" },
   { src: bathroomVanity1, category: "Bathroom & Vanity", label: "Bathroom & Vanity Remodel" },
   { src: bathroomVanity2, category: "Bathroom & Vanity", label: "Bathroom & Vanity Remodel" },
   { src: bathroomVanity3, category: "Bathroom & Vanity", label: "Bathroom & Vanity Remodel" },
   { src: bathroomVanity4, category: "Bathroom & Vanity", label: "Bathroom & Vanity Remodel" },
-  { src: bathroomVanity5, category: "Bathroom & Vanity", label: "Bathroom & Vanity Remodel" },
   { src: playarea1,       category: "Play Area",         label: "Play Area Build" },
   { src: playarea2,       category: "Play Area",         label: "Play Area Build" },
   { src: raisedBed1,      category: "Garden & Fence",    label: "Raised Bed Garden & Fence" },
