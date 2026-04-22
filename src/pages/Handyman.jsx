@@ -79,7 +79,7 @@ const Handyman = () => {
       {/* Hero */}
       <section className={`${styles.paddingX} pt-28 pb-10 max-w-7xl mx-auto`}>
         <h1 className={`${styles.heroHeadText} text-white`}>
-          Handyman <span className="text-[#915eff]">Work Examples</span>
+          Handyman <span className="text-[#915eff]">Examples</span>
         </h1>
         <p className={`${styles.heroSubText} mt-4 text-white-100 max-w-3xl`}>
           A collection of hands-on projects I've taken on — from bathroom remodels
