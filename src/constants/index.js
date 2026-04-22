@@ -112,6 +112,7 @@ const experiences = [
     icon: creator,
     iconBg: "#383E56",
     date: "2023 - Present",
+    link: "/handyman",
     bullets: [
       "Took on a wide range of home improvement projects including interior painting, electrical work (outlets, switches, light fixtures), and exterior trim replacement.",
       "Built custom outdoor playsets from the ground up — handling everything from design to the final build.",

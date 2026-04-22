@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
 import {
   VerticalTimeline,
@@ -28,7 +29,13 @@ const ExperienceCard = ({ experience }) => (
     }
   >
     <div className="text-white sm:text-[24px] text-[18px] font-bold">
-      {experience.title}
+      {experience.link ? (
+        <Link to={experience.link} className="hover:text-[#915eff] transition-colors">
+          {experience.title}
+        </Link>
+      ) : (
+        experience.title
+      )}
       <p
         className="text-secondary text-[16px] font-semibold"
         style={{ margin: 0 }}
