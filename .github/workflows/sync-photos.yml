@@ -1,0 +1,39 @@
+name: Auto-Sync Google Photos
+
+on:
+  schedule:
+    # Run every 6 hours (00:00, 06:00, 12:00, 18:00 UTC)
+    - cron: '0 */6 * * *'
+  # Allow manual trigger from GitHub Actions web UI
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync-photos:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Run Google Photos Sync
+        run: |
+          node scripts/sync-google-photos.js --no-deploy
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if [[ -n $(git status --porcelain src/assets/handyman src/data/autoSyncedProjects.json src/data/syncedMedia.json) ]]; then
+            git add src/assets/handyman/ src/data/autoSyncedProjects.json src/data/syncedMedia.json
+            git commit -m "Auto-sync new handyman photos [skip ci]"
+            git push
+          else
+            echo "No new photos found to sync."
+          fi

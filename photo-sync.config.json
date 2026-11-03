@@ -1,0 +1,14 @@
+{
+  "googlePhotosAlbumUrl": "https://photos.app.goo.gl/rzsCye2XgjAZUvW69",
+  "incomingFolder": "/Users/matthewmoniz/Library/CloudStorage/GoogleDrive-monizri@gmail.com/My Drive/Handy Projects Photos",
+  "archiveFolder": "/Users/matthewmoniz/Library/CloudStorage/GoogleDrive-monizri@gmail.com/My Drive/Handy Projects Photos/_processed",
+  "rejectedFolder": "/Users/matthewmoniz/Library/CloudStorage/GoogleDrive-monizri@gmail.com/My Drive/Handy Projects Photos/_processed/rejected",
+  "fallbackFolder": "./incoming-photos",
+  "maxDimension": 1600,
+  "quality": 85,
+  "autoDeploy": false,
+  "archiveProcessed": true,
+  "ntfyTopic": "matt-handyman-photos-monizri",
+  "notifyEmail": "monizri@gmail.com",
+  "albums": []
+}

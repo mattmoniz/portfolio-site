@@ -12,6 +12,7 @@ import {
 } from "./components";
 
 import Handyman from "./pages/Handyman";
+import HandymanAdmin from "./pages/HandymanAdmin";
 
 const DevPortfolio = () => (
   <div className="relative z-0 bg-primary">
@@ -37,6 +38,7 @@ const App = () => {
       <Routes>
         <Route path="/" element={<DevPortfolio />} />
         <Route path="/handyman" element={<Handyman />} />
+        <Route path="/handyman/admin" element={<HandymanAdmin />} />
       </Routes>
     </BrowserRouter>
   );

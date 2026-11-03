@@ -1,0 +1,39 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2026-10-30T17:58:00.000Z",
+  "projectKeywords": {
+    "bathroom": {
+      "terms": ["bath", "vanity", "tile", "sink", "faucet", "shower", "plumb", "toilet", "caulk", "grout"],
+      "category": "Bathroom Remodel",
+      "tags": ["Bathroom Updates", "Plumbing Fixtures", "Vanity Install", "Tile & Caulking"]
+    },
+    "carpentry": {
+      "terms": ["stair", "wood", "tread", "riser", "rail", "carpenter", "cabinet", "trim", "molding", "shelf", "door", "built-in"],
+      "category": "Custom Carpentry",
+      "tags": ["Custom Woodwork", "Finish Carpentry", "Precision Joinery", "Hardwood"]
+    },
+    "outdoor": {
+      "terms": ["deck", "pergola", "patio", "porch", "fence", "gate", "garden", "raised bed", "enclosure", "shed", "yard"],
+      "category": "Outdoor & Garden",
+      "tags": ["Outdoor Carpentry", "Rot-Resistant Lumber", "Custom Decking", "Garden Enclosure"]
+    },
+    "general": {
+      "terms": ["repair", "renovation", "framing", "drywall", "paint", "fixture", "install", "maintenance"],
+      "category": "Home Repairs & Improvements",
+      "tags": ["Home Repairs", "Maintenance", "Quality Craftsmanship"]
+    }
+  },
+  "negativePatterns": [
+    "screenshot",
+    "receipt",
+    "invoice",
+    "document",
+    "meme",
+    "food",
+    "pet",
+    "selfie"
+  ],
+  "minImageDimension": 600,
+  "minFileSizeKb": 40,
+  "clusterTimeWindowHours": 4
+}
