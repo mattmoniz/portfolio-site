@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import {
   handymanProjects,
   handymanServices,
@@ -15,8 +15,10 @@ const CLOUD_PROJECTS_URL =
   "https://raw.githubusercontent.com/mattmoniz/portfolio-site/main/src/data/projects.json";
 
 const Handyman = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [projectsList, setProjectsList] = useState(handymanProjects);
   const [activeCategory, setActiveCategory] = useState("All");
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedProject, setSelectedProject] = useState(null);
   const [editingProject, setEditingProject] = useState(null);
   const [inquiryType, setInquiryType] = useState("");
@@ -44,6 +46,33 @@ const Handyman = () => {
       .catch(() => {});
   }, []);
 
+  // Open project modal automatically if ?project=<id> is in the URL
+  useEffect(() => {
+    const projectSlug = searchParams.get("project");
+    if (projectSlug && projectsList.length > 0) {
+      const match = projectsList.find((p) => p.id === projectSlug);
+      if (match) {
+        setSelectedProject(match);
+      }
+    }
+  }, [searchParams, projectsList]);
+
+  const handleSelectProject = (project) => {
+    setSelectedProject(project);
+    if (project?.id) {
+      setSearchParams({ project: project.id }, { replace: true });
+    }
+  };
+
+  const handleCloseModal = () => {
+    setSelectedProject(null);
+    if (searchParams.has("project")) {
+      const next = new URLSearchParams(searchParams);
+      next.delete("project");
+      setSearchParams(next, { replace: true });
+    }
+  };
+
   // Dynamically extract categories with their counts
   const categoriesWithCounts = useMemo(() => {
     const counts = { All: projectsList.length };
@@ -58,11 +87,17 @@ const Handyman = () => {
     }));
   }, [projectsList]);
 
-  // Filtered projects
+  // Filtered projects (by category + search query)
   const filteredProjects = useMemo(() => {
-    if (activeCategory === "All") return projectsList;
-    return projectsList.filter((p) => p.category === activeCategory);
-  }, [activeCategory, projectsList]);
+    const q = searchQuery.trim().toLowerCase();
+    return projectsList.filter((p) => {
+      const matchesCat = activeCategory === "All" || p.category === activeCategory;
+      if (!matchesCat) return false;
+      if (!q) return true;
+      const haystack = `${p.title} ${p.category} ${p.summary} ${p.description} ${(p.tags || []).join(" ")}`.toLowerCase();
+      return haystack.includes(q);
+    });
+  }, [activeCategory, searchQuery, projectsList]);
 
   const handleOpenProjectInquiry = (projectTitle) => {
     setInquiryType(projectTitle);
@@ -193,44 +228,73 @@ const Handyman = () => {
             </p>
           </div>
 
-          {/* Category Filter Pills */}
-          <div className="flex flex-wrap gap-2 pt-2 md:pt-0">
-            {categoriesWithCounts.map((cat) => (
-              <button
-                key={cat.name}
-                onClick={() => setActiveCategory(cat.name)}
-                className={`py-2 px-3.5 rounded-full text-xs sm:text-sm font-medium transition-all flex items-center gap-1.5 ${
-                  activeCategory === cat.name
-                    ? "bg-[#915eff] text-white shadow-md shadow-[#915eff]/30"
-                    : "bg-[#151030] text-secondary hover:text-white border border-white/5 hover:border-white/20"
-                }`}
-              >
-                <span>{cat.name}</span>
-                <span
-                  className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+          {/* Search + Category Filter Pills */}
+          <div className="flex flex-col sm:items-end gap-3 pt-2 md:pt-0">
+            <div className="relative w-full sm:w-64">
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search projects (e.g. stairs, doors)..."
+                className="w-full bg-[#151030] border border-white/10 focus:border-[#915eff] rounded-full px-4 py-1.5 text-xs sm:text-sm text-white placeholder-secondary/60 outline-none transition-colors"
+              />
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {categoriesWithCounts.map((cat) => (
+                <button
+                  key={cat.name}
+                  onClick={() => setActiveCategory(cat.name)}
+                  className={`py-2 px-3.5 rounded-full text-xs sm:text-sm font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
                     activeCategory === cat.name
-                      ? "bg-white/25 text-white"
-                      : "bg-white/10 text-secondary"
+                      ? "bg-[#915eff] text-white shadow-md shadow-[#915eff]/30"
+                      : "bg-[#151030] text-secondary hover:text-white border border-white/5 hover:border-white/20"
                   }`}
                 >
-                  {cat.count}
-                </span>
-              </button>
-            ))}
+                  <span>{cat.name}</span>
+                  <span
+                    className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                      activeCategory === cat.name
+                        ? "bg-white/25 text-white"
+                        : "bg-white/10 text-secondary"
+                    }`}
+                  >
+                    {cat.count}
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
         {/* Project Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredProjects.map((project) => (
-            <ProjectCard
-              key={project.id}
-              project={project}
-              onSelect={setSelectedProject}
-              onEdit={setEditingProject}
-            />
-          ))}
-        </div>
+        {filteredProjects.length === 0 ? (
+          <div className="bg-[#151030]/60 border border-white/10 rounded-2xl p-10 text-center space-y-3">
+            <p className="text-white font-semibold">No matching projects found</p>
+            <p className="text-secondary text-sm">
+              Try clearing your search or selecting &ldquo;All&rdquo; categories.
+            </p>
+            <button
+              onClick={() => {
+                setActiveCategory("All");
+                setSearchQuery("");
+              }}
+              className="bg-[#915eff]/20 hover:bg-[#915eff]/30 text-[#c4b5fd] text-xs font-semibold px-4 py-2 rounded-lg border border-[#915eff]/30 transition-colors cursor-pointer"
+            >
+              Reset Filters
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredProjects.map((project) => (
+              <ProjectCard
+                key={project.id}
+                project={project}
+                onSelect={handleSelectProject}
+                onEdit={setEditingProject}
+              />
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Services Section */}
@@ -339,10 +403,10 @@ const Handyman = () => {
       {/* Project Lightbox & Details Modal */}
       <ProjectModal
         project={selectedProject}
-        onClose={() => setSelectedProject(null)}
+        onClose={handleCloseModal}
         onInquire={handleOpenProjectInquiry}
         onEdit={(p) => {
-          setSelectedProject(null);
+          handleCloseModal();
           setEditingProject(p);
         }}
       />

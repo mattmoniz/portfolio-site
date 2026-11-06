@@ -3,18 +3,23 @@ import emailjs from "@emailjs/browser";
 
 const InquiryForm = ({ initialProjectType = "" }) => {
   const formRef = useRef();
+  const lastSubmitRef = useRef(0);
   const [form, setForm] = useState({
     name: "",
     email: "",
+    phone: "",
+    contactPreference: "Text or Call",
     location: "",
     projectType: initialProjectType || "General Inquiry",
+    timeframe: "Flexible / Whenever Available",
     message: "",
+    websiteHoneypot: "", // Anti-bot honeypot field
   });
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  // Update projectType if passed from modal
+  // Update projectType if passed from modal or service card
   useEffect(() => {
     if (initialProjectType) {
       setForm((prev) => ({ ...prev, projectType: initialProjectType }));
@@ -28,6 +33,20 @@ const InquiryForm = ({ initialProjectType = "" }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    // 1. Silent Honeypot Check (blocks automated spam bots)
+    if (form.websiteHoneypot) {
+      setSubmitted(true);
+      return;
+    }
+
+    // 2. Client Rate-Limit Check (30s cooldown)
+    const now = Date.now();
+    if (now - lastSubmitRef.current < 30000) {
+      setErrorMessage("Please wait a moment before submitting another request.");
+      return;
+    }
+
     setLoading(true);
     setErrorMessage("");
 
@@ -35,18 +54,25 @@ const InquiryForm = ({ initialProjectType = "" }) => {
     const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
     const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY_ID;
 
-    // Build the formatted message to include location & project type
-    const fullMessage = `Project Type: ${form.projectType}\nTown/Location: ${
-      form.location || "Not specified"
-    }\n\nProject Scope & Details:\n${form.message}`;
+    // Build the formatted message to include phone, contact preference, timeframe, location & project type
+    const fullMessage = [
+      `Project Type: ${form.projectType}`,
+      `Town/Location: ${form.location || "Not specified"}`,
+      `Phone Number: ${form.phone || "Not provided"}`,
+      `Preferred Contact: ${form.contactPreference}`,
+      `Target Timeframe: ${form.timeframe}`,
+      ``,
+      `Project Scope & Details:`,
+      form.message,
+    ].join("\n");
 
     if (!serviceId || !templateId || !publicKey) {
-      // Graceful fallback for local development if env vars aren't loaded
       console.warn("EmailJS credentials not detected in environment variables.");
+      lastSubmitRef.current = Date.now();
       setTimeout(() => {
         setLoading(false);
         setSubmitted(true);
-      }, 800);
+      }, 600);
       return;
     }
 
@@ -65,14 +91,19 @@ const InquiryForm = ({ initialProjectType = "" }) => {
       )
       .then(
         () => {
+          lastSubmitRef.current = Date.now();
           setLoading(false);
           setSubmitted(true);
           setForm({
             name: "",
             email: "",
+            phone: "",
+            contactPreference: "Text or Call",
             location: "",
             projectType: "General Inquiry",
+            timeframe: "Flexible / Whenever Available",
             message: "",
+            websiteHoneypot: "",
           });
         },
         (err) => {
@@ -108,7 +139,7 @@ const InquiryForm = ({ initialProjectType = "" }) => {
             </div>
             <h3 className="text-xl font-bold text-white">Thank You for Reaching Out!</h3>
             <p className="text-secondary text-sm max-w-md mx-auto">
-              Your inquiry has been received. I review every project carefully and will get back to you promptly.
+              Your inquiry has been received. I review every project carefully and will follow up with you promptly via your preferred contact method.
             </p>
             <button
               onClick={() => setSubmitted(false)}
@@ -124,6 +155,20 @@ const InquiryForm = ({ initialProjectType = "" }) => {
                 {errorMessage}
               </div>
             )}
+
+            {/* Anti-spam honeypot field (hidden from real users) */}
+            <div className="hidden" aria-hidden="true">
+              <label htmlFor="website-honeypot">Website</label>
+              <input
+                id="website-honeypot"
+                type="text"
+                name="websiteHoneypot"
+                tabIndex={-1}
+                autoComplete="off"
+                value={form.websiteHoneypot}
+                onChange={handleChange}
+              />
+            </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               {/* Name */}
@@ -162,6 +207,43 @@ const InquiryForm = ({ initialProjectType = "" }) => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              {/* Phone Number */}
+              <div className="flex flex-col gap-2">
+                <label htmlFor="client-phone" className="text-white text-sm font-medium">
+                  Phone Number <span className="text-secondary text-xs font-normal">(Optional)</span>
+                </label>
+                <input
+                  id="client-phone"
+                  type="tel"
+                  name="phone"
+                  value={form.phone}
+                  onChange={handleChange}
+                  placeholder="e.g. (508) 555-0199"
+                  className="bg-black-100 border border-white/10 focus:border-[#915eff] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors"
+                />
+              </div>
+
+              {/* Preferred Contact Method */}
+              <div className="flex flex-col gap-2">
+                <label htmlFor="client-contact-pref" className="text-white text-sm font-medium">
+                  Preferred Contact Method
+                </label>
+                <select
+                  id="client-contact-pref"
+                  name="contactPreference"
+                  value={form.contactPreference}
+                  onChange={handleChange}
+                  className="bg-black-100 border border-white/10 focus:border-[#915eff] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors"
+                >
+                  <option value="Text or Call">Text or Call</option>
+                  <option value="Text Message">Text Message</option>
+                  <option value="Phone Call">Phone Call</option>
+                  <option value="Email">Email</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
               {/* Town / Location */}
               <div className="flex flex-col gap-2">
                 <label htmlFor="client-location" className="text-white text-sm font-medium">
@@ -173,7 +255,7 @@ const InquiryForm = ({ initialProjectType = "" }) => {
                   name="location"
                   value={form.location}
                   onChange={handleChange}
-                  placeholder="e.g. Plymouth, Braintree, Quincy..."
+                  placeholder="e.g. Plymouth, Quincy..."
                   className="bg-black-100 border border-white/10 focus:border-[#915eff] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors"
                 />
               </div>
@@ -200,6 +282,25 @@ const InquiryForm = ({ initialProjectType = "" }) => {
                   <option value="Other">Other</option>
                 </select>
               </div>
+
+              {/* Target Timeframe */}
+              <div className="flex flex-col gap-2">
+                <label htmlFor="client-timeframe" className="text-white text-sm font-medium">
+                  Ideal Timeframe
+                </label>
+                <select
+                  id="client-timeframe"
+                  name="timeframe"
+                  value={form.timeframe}
+                  onChange={handleChange}
+                  className="bg-black-100 border border-white/10 focus:border-[#915eff] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors"
+                >
+                  <option value="Flexible / Whenever Available">Flexible / Whenever Available</option>
+                  <option value="As Soon As Possible">As Soon As Possible</option>
+                  <option value="Within 2-4 Weeks">Within 2–4 Weeks</option>
+                  <option value="Planning Ahead (1-3 Months)">Planning Ahead (1–3 Months)</option>
+                </select>
+              </div>
             </div>
 
             {/* Message / Scope */}
@@ -210,10 +311,10 @@ const InquiryForm = ({ initialProjectType = "" }) => {
               <textarea
                 id="client-message"
                 name="message"
-                rows="5"
+                rows="4"
                 value={form.message}
                 onChange={handleChange}
-                placeholder="Tell me a bit about what you need done, any rough dimensions, or your ideal timeframe..."
+                placeholder="Tell me a bit about what you need done, any rough dimensions, or questions you have..."
                 required
                 className="bg-black-100 border border-white/10 focus:border-[#915eff] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors resize-y"
               />
@@ -227,7 +328,7 @@ const InquiryForm = ({ initialProjectType = "" }) => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full sm:w-auto bg-[#915eff] hover:bg-[#7e47f2] disabled:opacity-50 text-white font-bold py-3.5 px-8 rounded-xl transition-colors shadow-lg shadow-[#915eff]/20 flex items-center justify-center gap-2"
+                className="w-full sm:w-auto bg-[#915eff] hover:bg-[#7e47f2] disabled:opacity-50 text-white font-bold py-3.5 px-8 rounded-xl transition-colors shadow-lg shadow-[#915eff]/20 flex items-center justify-center gap-2 cursor-pointer"
               >
                 {loading ? "Sending..." : "Submit Inquiry"}
               </button>

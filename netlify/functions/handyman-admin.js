@@ -225,23 +225,74 @@ export async function handler(event) {
     return jsonResponse(401, { error: "Unauthorized. Session expired or invalid." }, origin);
   }
 
-  // 3. Load Latest Cloud Projects & Staged Queue
+  // 3. Load Latest Cloud Projects, Staged Queue & Synced Media Memory
   if (action === "load-cloud-data") {
     try {
-      const [liveData, stagedData] = await Promise.all([
+      const [liveData, stagedData, mediaData] = await Promise.all([
         getGitHubFile("src/data/projects.json"),
         getGitHubFile("src/data/stagedProjects.json"),
+        getGitHubFile("src/data/syncedMedia.json"),
       ]);
       return jsonResponse(
         200,
         {
           projects: liveData ? liveData.content : null,
           stagedProjects: stagedData ? stagedData.content : null,
+          seenBaseUrls: mediaData?.content?.seenBaseUrls || [],
         },
         origin
       );
     } catch (err) {
       return jsonResponse(500, { error: "Failed to load cloud data: " + err.message }, origin);
+    }
+  }
+
+  // 4. Permanently Reject Photo URLs in Cloud Memory
+  if (action === "reject-photo") {
+    const { urls, stagedProjects } = body;
+    const urlList = Array.isArray(urls) ? urls : [];
+    try {
+      const mediaFile = await getGitHubFile("src/data/syncedMedia.json");
+      const mediaContent = mediaFile?.content || {
+        syncedIds: [],
+        hashes: {},
+        rejectedHashes: {},
+        seenBaseUrls: [],
+        rejectedUrls: [],
+      };
+      if (!Array.isArray(mediaContent.seenBaseUrls)) mediaContent.seenBaseUrls = [];
+      if (!Array.isArray(mediaContent.rejectedUrls)) mediaContent.rejectedUrls = [];
+
+      for (const rawUrl of urlList) {
+        const base = String(rawUrl || "").split("=")[0];
+        if (base && !mediaContent.seenBaseUrls.includes(base)) {
+          mediaContent.seenBaseUrls.push(base);
+        }
+        if (base && !mediaContent.rejectedUrls.includes(base)) {
+          mediaContent.rejectedUrls.push(base);
+        }
+      }
+
+      await updateGitHubFile(
+        "src/data/syncedMedia.json",
+        mediaContent,
+        "Record rejected photo URL in cloud memory",
+        mediaFile ? mediaFile.sha : null
+      );
+
+      if (Array.isArray(stagedProjects)) {
+        const stagedData = await getGitHubFile("src/data/stagedProjects.json");
+        await updateGitHubFile(
+          "src/data/stagedProjects.json",
+          stagedProjects,
+          "Update staged projects after photo rejection",
+          stagedData ? stagedData.sha : null
+        );
+      }
+
+      return jsonResponse(200, { success: true, seenBaseUrls: mediaContent.seenBaseUrls }, origin);
+    } catch (err) {
+      return jsonResponse(500, { error: "Failed to record rejected photo: " + err.message }, origin);
     }
   }
 

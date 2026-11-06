@@ -45,6 +45,36 @@ function localProjectEditorPlugin() {
                   return res.end(JSON.stringify({ error: 'Invalid Google token' }))
                 }
 
+                if (action === 'load-cloud-data') {
+                  const projectsPath = path.resolve(__dirname, 'src/data/projects.json')
+                  const stagedPath = path.resolve(__dirname, 'src/data/stagedProjects.json')
+                  const mediaPath = path.resolve(__dirname, 'src/data/syncedMedia.json')
+                  const projects = fs.existsSync(projectsPath) ? JSON.parse(fs.readFileSync(projectsPath, 'utf8')) : []
+                  const stagedProjects = fs.existsSync(stagedPath) ? JSON.parse(fs.readFileSync(stagedPath, 'utf8')) : []
+                  const media = fs.existsSync(mediaPath) ? JSON.parse(fs.readFileSync(mediaPath, 'utf8')) : {}
+                  res.writeHead(200, { 'Content-Type': 'application/json' })
+                  return res.end(JSON.stringify({ projects, stagedProjects, seenBaseUrls: media.seenBaseUrls || [] }))
+                }
+
+                if (action === 'reject-photo') {
+                  const mediaPath = path.resolve(__dirname, 'src/data/syncedMedia.json')
+                  const stagedPath = path.resolve(__dirname, 'src/data/stagedProjects.json')
+                  const media = fs.existsSync(mediaPath) ? JSON.parse(fs.readFileSync(mediaPath, 'utf8')) : { seenBaseUrls: [], rejectedUrls: [] }
+                  if (!Array.isArray(media.seenBaseUrls)) media.seenBaseUrls = []
+                  if (!Array.isArray(media.rejectedUrls)) media.rejectedUrls = []
+                  for (const u of data.urls || []) {
+                    const base = String(u || '').split('=')[0]
+                    if (base && !media.seenBaseUrls.includes(base)) media.seenBaseUrls.push(base)
+                    if (base && !media.rejectedUrls.includes(base)) media.rejectedUrls.push(base)
+                  }
+                  fs.writeFileSync(mediaPath, JSON.stringify(media, null, 2), 'utf8')
+                  if (Array.isArray(data.stagedProjects)) {
+                    fs.writeFileSync(stagedPath, JSON.stringify(data.stagedProjects, null, 2), 'utf8')
+                  }
+                  res.writeHead(200, { 'Content-Type': 'application/json' })
+                  return res.end(JSON.stringify({ success: true, seenBaseUrls: media.seenBaseUrls }))
+                }
+
                 if (action === 'scan-album') {
                   const albumUrl = data.albumUrl || 'https://photos.app.goo.gl/rzsCye2XgjAZUvW69'
                   const resp = await fetch(albumUrl, { redirect: 'follow' })

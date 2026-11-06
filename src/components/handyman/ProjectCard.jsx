@@ -1,8 +1,36 @@
 import { resolveHandymanImage } from "../../data/handymanProjects";
 
+export function detectPhotoStage(img, index, total) {
+  if (!img) return null;
+  if (img.stage) return img.stage;
+  const text = `${img.caption || ""} ${img.file || ""}`.toLowerCase();
+  if (/before|stripped|demo|rough opening|initial framing|subfloor prep/.test(text)) {
+    return "Before / Prep";
+  }
+  if (/prep|framing|alignment|spackling|sanding|primed|joinery|underlayment/.test(text)) {
+    return "In Progress";
+  }
+  if (/completed|finished|overview|final|harvest/.test(text) || (index === 0 && total > 1)) {
+    return "Finished Result";
+  }
+  return null;
+}
+
+export function hasBeforeAndAfter(project) {
+  const images = project?.images || [];
+  if (images.length < 2) return false;
+  const stages = images.map((img, i) => detectPhotoStage(img, i, images.length));
+  const hasEarly = stages.some((s) => s === "Before / Prep" || s === "In Progress");
+  const hasFinished = stages.some((s) => s === "Finished Result");
+  return hasEarly && hasFinished;
+}
+
 const ProjectCard = ({ project, onSelect, onEdit }) => {
-  const coverSrc = resolveHandymanImage(project.coverImage || project.images?.[0]?.file || project.images?.[0]?.src);
+  const coverSrc = resolveHandymanImage(
+    project.coverImage || project.images?.[0]?.file || project.images?.[0]?.src
+  );
   const photoCount = project.images?.length || 1;
+  const showBeforeAfterBadge = hasBeforeAndAfter(project);
 
   return (
     <div
@@ -23,7 +51,7 @@ const ProjectCard = ({ project, onSelect, onEdit }) => {
         <div className="absolute inset-0 bg-gradient-to-t from-[#151030] via-transparent to-black/20" />
 
         {/* Category Pill */}
-        <div className="absolute top-3 left-3">
+        <div className="absolute top-3 left-3 flex flex-wrap items-center gap-1.5">
           <span className="bg-black/60 backdrop-blur-md text-[#dfd9ff] border border-white/15 text-xs font-semibold px-3 py-1 rounded-full shadow-sm">
             {project.category}
           </span>
@@ -35,6 +63,15 @@ const ProjectCard = ({ project, onSelect, onEdit }) => {
             <span>📷</span> {photoCount} {photoCount === 1 ? "photo" : "photos"}
           </span>
         </div>
+
+        {/* Before & After Badge */}
+        {showBeforeAfterBadge && (
+          <div className="absolute bottom-3 left-3">
+            <span className="bg-emerald-500/20 backdrop-blur-md text-emerald-300 border border-emerald-400/30 text-[11px] font-semibold px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
+              <span>✨</span> Before &amp; After Inside
+            </span>
+          </div>
+        )}
 
         {/* Local Dev Edit Button */}
         {import.meta.env.DEV && onEdit && (
@@ -85,7 +122,7 @@ const ProjectCard = ({ project, onSelect, onEdit }) => {
 
           {/* Action Row */}
           <div className="flex items-center justify-between text-sm font-semibold text-[#915eff] group-hover:text-white transition-colors">
-            <span>View Project & Gallery</span>
+            <span>View Project &amp; Gallery</span>
             <span className="transform transition-transform group-hover:translate-x-1">→</span>
           </div>
         </div>

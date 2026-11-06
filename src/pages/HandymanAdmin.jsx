@@ -35,7 +35,8 @@ const HandymanAdmin = () => {
   // Data state
   const [liveProjects, setLiveProjects] = useState(initialLiveProjects || []);
   const [stagedProjects, setStagedProjects] = useState(initialStagedProjects || []);
-  
+  const [seenBaseUrls, setSeenBaseUrls] = useState(() => syncedMedia?.seenBaseUrls || []);
+
   // UI state
   const [isScanning, setIsScanning] = useState(false);
   const [scanMessage, setScanMessage] = useState("");
@@ -67,6 +68,9 @@ const HandymanAdmin = () => {
         }
         if (data?.stagedProjects && Array.isArray(data.stagedProjects)) {
           setStagedProjects(data.stagedProjects);
+        }
+        if (data?.seenBaseUrls && Array.isArray(data.seenBaseUrls)) {
+          setSeenBaseUrls(data.seenBaseUrls);
         }
       })
       .catch(() => {});
@@ -127,8 +131,6 @@ const HandymanAdmin = () => {
             width: 320,
           });
         }
-      } else if (!googleClientId) {
-        // No client ID configured yet; fallback passcode is available
       } else {
         timer = setTimeout(tryInitGoogle, 300);
       }
@@ -148,6 +150,15 @@ const HandymanAdmin = () => {
     }
   };
 
+  const persistStagedInCloud = (updatedStaged) => {
+    const token = sessionStorage.getItem("handyman_admin_token") || "dev-token-verified";
+    fetch("/.netlify/functions/handyman-admin", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "save-staged", token, stagedProjects: updatedStaged }),
+    }).catch(() => {});
+  };
+
   // Scan Google Photos Album on demand
   const handleScanAlbum = async () => {
     setIsScanning(true);
@@ -164,7 +175,7 @@ const HandymanAdmin = () => {
       const data = await res.json();
       if (res.ok && data.photos) {
         // Collect all photos already in live projects or previously synced/rejected
-        const existingLiveUrls = new Set(syncedMedia?.seenBaseUrls || []);
+        const existingLiveUrls = new Set(seenBaseUrls);
         liveProjects.forEach((p) => {
           if (p.coverImage) existingLiveUrls.add(p.coverImage.split("=")[0]);
           (p.images || []).forEach((img) => existingLiveUrls.add((img.file || "").split("=")[0]));
@@ -177,7 +188,7 @@ const HandymanAdmin = () => {
           (p.images || []).forEach((img) => existingStagedUrls.add((img.file || "").split("=")[0]));
         });
 
-        // Filter out photos that already exist
+        // Filter out photos that already exist or were previously rejected
         const unassignedUrls = data.photos.filter((url) => {
           const base = url.split("=")[0];
           return !existingLiveUrls.has(base) && !existingStagedUrls.has(base);
@@ -186,7 +197,6 @@ const HandymanAdmin = () => {
         if (unassignedUrls.length === 0) {
           setScanMessage(`✨ Checked ${data.totalFound} album photos. Everything is already up to date!`);
         } else {
-          // Create a new staged project draft with the newly discovered photos
           const newDraft = {
             id: `staged-${Date.now()}`,
             title: "New Handyman Project",
@@ -205,13 +215,7 @@ const HandymanAdmin = () => {
           const updatedStaged = [newDraft, ...stagedProjects];
           setStagedProjects(updatedStaged);
           setScanMessage(`🎉 Found ${unassignedUrls.length} new photo(s)! Staged into a new draft below.`);
-
-          // Save staging draft locally
-          fetch("/.netlify/functions/handyman-admin", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ action: "save-staged", token, stagedProjects: updatedStaged }),
-          }).catch(() => {});
+          persistStagedInCloud(updatedStaged);
         }
       } else {
         setScanMessage(data.error || "Unable to scan Google Photos album right now.");
@@ -242,6 +246,20 @@ const HandymanAdmin = () => {
     );
   };
 
+  // Reorder photo left/right inside a staged project
+  const handleMoveStagedPhotoOrder = (projectId, photoIndex, direction) => {
+    setStagedProjects((prev) =>
+      prev.map((p) => {
+        if (p.id !== projectId) return p;
+        const imgs = [...(p.images || [])];
+        const targetIdx = photoIndex + direction;
+        if (targetIdx < 0 || targetIdx >= imgs.length) return p;
+        [imgs[photoIndex], imgs[targetIdx]] = [imgs[targetIdx], imgs[photoIndex]];
+        return { ...p, images: imgs };
+      })
+    );
+  };
+
   // Set cover photo on a staged project
   const handleSetStagedCover = (projectId, fileUrl) => {
     setStagedProjects((prev) =>
@@ -249,10 +267,13 @@ const HandymanAdmin = () => {
     );
   };
 
-  // Remove an unwanted photo from a staged project
+  // Permanently reject & remove an unwanted photo from a staged project
   const handleRemoveStagedPhoto = (projectId, photoIndex) => {
-    setStagedProjects((prev) =>
-      prev.map((p) => {
+    const targetProject = stagedProjects.find((p) => p.id === projectId);
+    const removedUrl = targetProject?.images?.[photoIndex]?.file;
+
+    const updatedStaged = stagedProjects
+      .map((p) => {
         if (p.id !== projectId) return p;
         const newImages = (p.images || []).filter((_, idx) => idx !== photoIndex);
         const newCover =
@@ -261,14 +282,122 @@ const HandymanAdmin = () => {
             : p.coverImage;
         return { ...p, images: newImages, coverImage: newCover };
       })
-    );
+      .filter((p) => (p.images || []).length > 0);
+
+    setStagedProjects(updatedStaged);
+
+    if (removedUrl) {
+      const base = removedUrl.split("=")[0];
+      setSeenBaseUrls((prev) => (prev.includes(base) ? prev : [...prev, base]));
+      const token = sessionStorage.getItem("handyman_admin_token") || "dev-token-verified";
+      fetch("/.netlify/functions/handyman-admin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "reject-photo",
+          token,
+          urls: [removedUrl],
+          stagedProjects: updatedStaged,
+        }),
+      }).catch(() => {});
+      setPublishMessage("🚫 Photo removed and saved to permanent cloud rejection memory.");
+    }
   };
 
-  // Discard an entire staged draft
+  // Move or split a staged photo into a new draft, another staged draft, or an existing live project
+  const handleTransferStagedPhoto = (sourceProjectId, photoIndex, destinationValue) => {
+    if (!destinationValue) return;
+    const sourceProject = stagedProjects.find((p) => p.id === sourceProjectId);
+    const photoObj = sourceProject?.images?.[photoIndex];
+    if (!photoObj) return;
+
+    // Remove photo from source staged project
+    let nextStaged = stagedProjects
+      .map((p) => {
+        if (p.id !== sourceProjectId) return p;
+        const remaining = (p.images || []).filter((_, i) => i !== photoIndex);
+        const nextCover =
+          p.coverImage === photoObj.file ? remaining[0]?.file || "" : p.coverImage;
+        return { ...p, images: remaining, coverImage: nextCover };
+      })
+      .filter((p) => (p.images || []).length > 0);
+
+    if (destinationValue === "__new_draft__") {
+      const newDraft = {
+        id: `staged-${Date.now()}`,
+        title: "New Split Project",
+        category: sourceProject.category || "Home Repairs & Improvements",
+        featured: true,
+        summary: "Recently completed project photos ready for client showcase.",
+        description: "Detailed description of materials used, custom fabrication, and work performed.",
+        tags: [...(sourceProject.tags || ["New Work"])],
+        coverImage: photoObj.file,
+        images: [{ ...photoObj }],
+      };
+      nextStaged = [newDraft, ...nextStaged];
+      setStagedProjects(nextStaged);
+      persistStagedInCloud(nextStaged);
+      setPublishMessage("✨ Split photo into a new separate staged project draft!");
+    } else if (destinationValue.startsWith("staged:")) {
+      const targetStagedId = destinationValue.slice("staged:".length);
+      nextStaged = nextStaged.map((p) =>
+        p.id === targetStagedId
+          ? {
+              ...p,
+              images: [...(p.images || []), { ...photoObj }],
+              coverImage: p.coverImage || photoObj.file,
+            }
+          : p
+      );
+      setStagedProjects(nextStaged);
+      persistStagedInCloud(nextStaged);
+      setPublishMessage("📥 Moved photo into selected staged draft.");
+    } else if (destinationValue.startsWith("live:")) {
+      const targetLiveId = destinationValue.slice("live:".length);
+      const targetLive = liveProjects.find((p) => p.id === targetLiveId);
+      const nextLive = liveProjects.map((p) =>
+        p.id === targetLiveId
+          ? {
+              ...p,
+              images: [{ ...photoObj }, ...(p.images || [])],
+              coverImage: p.coverImage || photoObj.file,
+            }
+          : p
+      );
+      setLiveProjects(nextLive);
+      setStagedProjects(nextStaged);
+      setEditingLiveId(targetLiveId);
+      setPublishMessage(
+        `🌟 Added photo to live project "${targetLive?.title}". Click "Save & Push Live" on that card to publish!`
+      );
+    }
+  };
+
+  // Discard an entire staged draft (and remember its photos as rejected so they don't return)
   const handleDiscardStaged = (projectId) => {
-    if (!window.confirm("Are you sure you want to discard this staged draft?")) return;
-    const updated = stagedProjects.filter((p) => p.id !== projectId);
-    setStagedProjects(updated);
+    if (!window.confirm("Discard this staged draft and permanently ignore its photos on future album scans?")) {
+      return;
+    }
+    const discarded = stagedProjects.find((p) => p.id === projectId);
+    const urls = (discarded?.images || []).map((img) => img.file).filter(Boolean);
+    const updatedStaged = stagedProjects.filter((p) => p.id !== projectId);
+    setStagedProjects(updatedStaged);
+
+    if (urls.length > 0) {
+      const bases = urls.map((u) => u.split("=")[0]);
+      setSeenBaseUrls((prev) => Array.from(new Set([...prev, ...bases])));
+      const token = sessionStorage.getItem("handyman_admin_token") || "dev-token-verified";
+      fetch("/.netlify/functions/handyman-admin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "reject-photo",
+          token,
+          urls,
+          stagedProjects: updatedStaged,
+        }),
+      }).catch(() => {});
+    }
   };
 
   // Approve & Publish Live
@@ -278,8 +407,7 @@ const HandymanAdmin = () => {
 
     try {
       const token = sessionStorage.getItem("handyman_admin_token") || "dev-token-verified";
-      
-      // Move approved project from staged to live list
+
       const cleanApproved = {
         ...stagedProject,
         id: stagedProject.id.startsWith("staged-")
@@ -316,10 +444,75 @@ const HandymanAdmin = () => {
     }
   };
 
+  // Reorder live project cards (up/down)
+  const handleMoveLiveProjectOrder = async (index, direction) => {
+    const targetIdx = index + direction;
+    if (targetIdx < 0 || targetIdx >= liveProjects.length) return;
+    const nextLive = [...liveProjects];
+    [nextLive[index], nextLive[targetIdx]] = [nextLive[targetIdx], nextLive[index]];
+    setLiveProjects(nextLive);
+
+    const token = sessionStorage.getItem("handyman_admin_token") || "dev-token-verified";
+    try {
+      await fetch("/.netlify/functions/handyman-admin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "publish-live",
+          token,
+          projects: nextLive,
+          stagedProjects,
+        }),
+      });
+      setPublishMessage("✅ Updated project card display order on live site!");
+    } catch {}
+  };
+
+  // Reorder photo inside a live project
+  const handleMoveLivePhotoOrder = (projectId, photoIndex, direction) => {
+    setLiveProjects((prev) =>
+      prev.map((p) => {
+        if (p.id !== projectId) return p;
+        const imgs = [...(p.images || [])];
+        const targetIdx = photoIndex + direction;
+        if (targetIdx < 0 || targetIdx >= imgs.length) return p;
+        [imgs[photoIndex], imgs[targetIdx]] = [imgs[targetIdx], imgs[photoIndex]];
+        return { ...p, images: imgs };
+      })
+    );
+  };
+
+  // Update photo caption inside a live project
+  const handleUpdateLivePhotoCaption = (projectId, photoIndex, caption) => {
+    setLiveProjects((prev) =>
+      prev.map((p) => {
+        if (p.id !== projectId) return p;
+        const imgs = [...(p.images || [])];
+        imgs[photoIndex] = { ...imgs[photoIndex], caption };
+        return { ...p, images: imgs };
+      })
+    );
+  };
+
+  // Remove photo from a live project
+  const handleRemoveLivePhoto = (projectId, photoIndex) => {
+    setLiveProjects((prev) =>
+      prev.map((p) => {
+        if (p.id !== projectId) return p;
+        const imgs = (p.images || []).filter((_, i) => i !== photoIndex);
+        const nextCover =
+          p.coverImage === p.images?.[photoIndex]?.file
+            ? imgs[0]?.file || ""
+            : p.coverImage;
+        return { ...p, images: imgs, coverImage: nextCover };
+      })
+    );
+  };
+
   // Save changes made to an already live project
-  const handleSaveLiveEdit = async (project) => {
+  const handleSaveLiveEdit = async () => {
     setIsPublishing(true);
-    setPublishMessage("Updating live project wording...");
+    setPublishMessage("Updating live project & photos in the cloud...");
 
     try {
       const token = sessionStorage.getItem("handyman_admin_token") || "dev-token-verified";
@@ -337,7 +530,7 @@ const HandymanAdmin = () => {
       const data = await res.json();
       if (res.ok && data.success) {
         setEditingLiveId(null);
-        setPublishMessage("✅ Live project wording saved & deployed!");
+        setPublishMessage("✅ Live project & photo changes saved and deployed!");
       } else {
         setPublishMessage("⚠️ " + (data.error || "Failed to update project."));
       }
@@ -349,13 +542,12 @@ const HandymanAdmin = () => {
   };
 
   // ==========================================
-  // 1. Passcode & Google SSO Protection Screen
+  // 1. Google SSO Protection Screen
   // ==========================================
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-[#050816] flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-[#151030] border border-white/10 rounded-2xl p-8 shadow-2xl relative overflow-hidden">
-          {/* Ambient Glow */}
           <div className="absolute -top-24 -left-24 w-48 h-48 bg-[#915eff]/20 rounded-full blur-3xl pointer-events-none" />
 
           <div className="text-center mb-6 relative z-10">
@@ -364,12 +556,11 @@ const HandymanAdmin = () => {
             </div>
             <h1 className="text-2xl font-bold text-white tracking-wide">Handyman Admin Portal</h1>
             <p className="text-[#aaa6c3] text-sm mt-2">
-              Sign in to review staged Google Photos, modify titles & descriptions, and publish live to Netlify.
+              Sign in with Google to review staged cloud photos, organize project cards, and publish live.
             </p>
           </div>
 
           <div className="space-y-4 relative z-10">
-            {/* Google SSO Authentication */}
             <div className="flex flex-col items-center justify-center space-y-3 py-2">
               <div id="google-signin-btn" className="min-h-[44px] flex items-center justify-center" />
               {isVerifying && (
@@ -412,7 +603,7 @@ const HandymanAdmin = () => {
             <span className="text-2xl">🛠️</span>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-lg font-bold text-white">Handyman Staging & Admin</h1>
+                <h1 className="text-lg font-bold text-white">Handyman Staging &amp; Admin</h1>
                 {user ? (
                   <span className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1.5">
                     {user.picture ? (
@@ -437,7 +628,6 @@ const HandymanAdmin = () => {
           </div>
 
           <div className="flex items-center flex-wrap gap-2.5">
-            {/* Check Google Photos Button */}
             <button
               onClick={handleScanAlbum}
               disabled={isScanning}
@@ -448,7 +638,6 @@ const HandymanAdmin = () => {
               {isScanning ? "Checking Photos..." : "Check Google Photos Now"}
             </button>
 
-            {/* View Live Public Site */}
             <Link
               to="/handyman"
               target="_blank"
@@ -458,7 +647,6 @@ const HandymanAdmin = () => {
               <span>👁️</span> Public Site
             </Link>
 
-            {/* Logout */}
             <button
               onClick={handleLogout}
               className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 text-xs font-medium px-3 py-2 rounded-lg transition-all flex items-center gap-1 cursor-pointer"
@@ -480,7 +668,7 @@ const HandymanAdmin = () => {
                 <span>{scanMessage}</span>
                 <button
                   onClick={() => setScanMessage("")}
-                  className="text-white/60 hover:text-white text-xs ml-4"
+                  className="text-white/60 hover:text-white text-xs ml-4 cursor-pointer"
                 >
                   ✕
                 </button>
@@ -491,7 +679,7 @@ const HandymanAdmin = () => {
                 <span>{publishMessage}</span>
                 <button
                   onClick={() => setPublishMessage("")}
-                  className="text-white/60 hover:text-white text-xs ml-4"
+                  className="text-white/60 hover:text-white text-xs ml-4 cursor-pointer"
                 >
                   ✕
                 </button>
@@ -507,10 +695,10 @@ const HandymanAdmin = () => {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                <span>⏳</span> Pending Review & Staging
+                <span>⏳</span> Pending Review &amp; Staging
               </h2>
               <p className="text-xs text-[#aaa6c3] mt-0.5">
-                New photos uploaded to your album land here first. Edit the wording, choose a cover photo, and tap "Approve & Deploy Live".
+                New photos uploaded to your Google Photos album land here first. Reorder photos, split them into separate cards, or move a photo into an existing live project.
               </p>
             </div>
             <span className="bg-[#915eff]/20 text-[#dfd9ff] border border-[#915eff]/40 text-xs font-semibold px-2.5 py-1 rounded-full">
@@ -523,7 +711,7 @@ const HandymanAdmin = () => {
               <span className="text-4xl block mb-2">📸</span>
               <h3 className="text-base font-semibold text-white">No photos pending approval</h3>
               <p className="text-sm text-[#aaa6c3] max-w-md mx-auto mt-1 mb-4">
-                When you take new photos, upload them to your Google Photos shared album, then click the purple button above to stage them.
+                When you take new photos, upload them to your Google Photos shared album, then click the button below to stage them in the cloud.
               </p>
               <button
                 onClick={handleScanAlbum}
@@ -556,7 +744,7 @@ const HandymanAdmin = () => {
                         onClick={() => handleDiscardStaged(project.id)}
                         className="text-xs text-red-400 hover:text-red-300 px-3 py-1.5 rounded-lg border border-red-500/20 hover:bg-red-500/10 transition-all cursor-pointer"
                       >
-                        🗑️ Discard Draft
+                        🗑️ Reject &amp; Discard Draft
                       </button>
                       <button
                         onClick={() => handleApproveAndPublish(project)}
@@ -571,7 +759,6 @@ const HandymanAdmin = () => {
 
                   {/* Form Inputs Grid */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Title */}
                     <div>
                       <label className="block text-xs font-semibold text-[#dfd9ff] uppercase tracking-wider mb-1">
                         Project Title
@@ -585,7 +772,6 @@ const HandymanAdmin = () => {
                       />
                     </div>
 
-                    {/* Category */}
                     <div>
                       <label className="block text-xs font-semibold text-[#dfd9ff] uppercase tracking-wider mb-1">
                         Category
@@ -617,7 +803,6 @@ const HandymanAdmin = () => {
                       </div>
                     </div>
 
-                    {/* Summary */}
                     <div className="md:col-span-2">
                       <label className="block text-xs font-semibold text-[#dfd9ff] uppercase tracking-wider mb-1">
                         Short Summary (Card Preview)
@@ -631,7 +816,6 @@ const HandymanAdmin = () => {
                       />
                     </div>
 
-                    {/* Description */}
                     <div className="md:col-span-2">
                       <label className="block text-xs font-semibold text-[#dfd9ff] uppercase tracking-wider mb-1">
                         Detailed Narrative (Modal View)
@@ -645,7 +829,6 @@ const HandymanAdmin = () => {
                       />
                     </div>
 
-                    {/* Tags */}
                     <div className="md:col-span-2">
                       <label className="block text-xs font-semibold text-[#dfd9ff] uppercase tracking-wider mb-1">
                         Tags (comma separated)
@@ -666,14 +849,15 @@ const HandymanAdmin = () => {
                     </div>
                   </div>
 
-                  {/* Photos Grid with Cover Selection & Captions */}
+                  {/* Photos Grid with Cover Selection, Reordering, Captions & Project Split/Transfer */}
                   <div>
                     <h4 className="text-xs font-semibold text-[#dfd9ff] uppercase tracking-wider mb-3">
-                      Review Photos & Set Cover (Click ★ on an image to make it the cover)
+                      Review, Reorder &amp; Assign Photos (Use ← / → to reorder, ★ for cover, or move a photo to another card)
                     </h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                       {(project.images || []).map((img, idx) => {
                         const isCover = project.coverImage === img.file;
+                        const totalImgs = (project.images || []).length;
                         return (
                           <div
                             key={idx}
@@ -688,16 +872,19 @@ const HandymanAdmin = () => {
                                 referrerPolicy="no-referrer"
                                 className="w-full h-full object-cover"
                               />
+                              <span className="absolute bottom-2 left-2 bg-black/75 text-white/90 text-[10px] font-semibold px-2 py-0.5 rounded">
+                                #{idx + 1}
+                              </span>
                               {isCover && (
                                 <span className="absolute top-2 left-2 bg-emerald-500 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow">
-                                  ★ Current Cover
+                                  ★ Cover
                                 </span>
                               )}
                               <button
                                 type="button"
                                 onClick={() => handleRemoveStagedPhoto(project.id, idx)}
-                                className="absolute top-2 right-2 bg-black/70 hover:bg-red-500 text-white text-xs w-6 h-6 rounded-full flex items-center justify-center transition-colors"
-                                title="Remove this photo from project"
+                                className="absolute top-2 right-2 bg-black/70 hover:bg-red-500 text-white text-xs w-6 h-6 rounded-full flex items-center justify-center transition-colors cursor-pointer"
+                                title="Permanently reject & remove this photo"
                               >
                                 ✕
                               </button>
@@ -711,15 +898,67 @@ const HandymanAdmin = () => {
                                 placeholder="Photo caption..."
                                 className="w-full bg-[#151030] border border-white/10 rounded px-2.5 py-1 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#915eff]"
                               />
-                              {!isCover && (
+
+                              {/* Reorder + Make Cover Row */}
+                              <div className="flex items-center gap-1.5">
                                 <button
                                   type="button"
-                                  onClick={() => handleSetStagedCover(project.id, img.file)}
-                                  className="w-full bg-white/5 hover:bg-white/10 text-white/80 hover:text-white text-[11px] font-medium py-1 rounded transition-colors text-center"
+                                  disabled={idx === 0}
+                                  onClick={() => handleMoveStagedPhotoOrder(project.id, idx, -1)}
+                                  className="bg-white/5 hover:bg-white/15 disabled:opacity-30 text-white text-[11px] px-2 py-1 rounded transition-colors cursor-pointer"
+                                  title="Move photo earlier"
                                 >
-                                  ★ Make Cover
+                                  ←
                                 </button>
-                              )}
+                                <button
+                                  type="button"
+                                  disabled={idx === totalImgs - 1}
+                                  onClick={() => handleMoveStagedPhotoOrder(project.id, idx, 1)}
+                                  className="bg-white/5 hover:bg-white/15 disabled:opacity-30 text-white text-[11px] px-2 py-1 rounded transition-colors cursor-pointer"
+                                  title="Move photo later"
+                                >
+                                  →
+                                </button>
+                                {!isCover && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSetStagedCover(project.id, img.file)}
+                                    className="flex-1 bg-white/5 hover:bg-white/10 text-white/80 hover:text-white text-[11px] font-medium py-1 rounded transition-colors text-center cursor-pointer"
+                                  >
+                                    ★ Cover
+                                  </button>
+                                )}
+                              </div>
+
+                              {/* Move / Split Photo Dropdown */}
+                              <select
+                                value=""
+                                onChange={(e) =>
+                                  handleTransferStagedPhoto(project.id, idx, e.target.value)
+                                }
+                                className="w-full bg-[#151030] border border-white/10 rounded px-2 py-1 text-[11px] text-[#dfd9ff] focus:outline-none focus:border-[#915eff]"
+                              >
+                                <option value="">⇄ Move / Split photo to...</option>
+                                {totalImgs > 1 && (
+                                  <option value="__new_draft__">
+                                    ➕ Split into a New Staged Project Card
+                                  </option>
+                                )}
+                                {stagedProjects
+                                  .filter((other) => other.id !== project.id)
+                                  .map((other) => (
+                                    <option key={other.id} value={`staged:${other.id}`}>
+                                      📥 Draft: {other.title}
+                                    </option>
+                                  ))}
+                                <optgroup label="Add to Existing Live Project">
+                                  {liveProjects.map((lp) => (
+                                    <option key={lp.id} value={`live:${lp.id}`}>
+                                      🌟 Live: {lp.title}
+                                    </option>
+                                  ))}
+                                </optgroup>
+                              </select>
                             </div>
                           </div>
                         );
@@ -742,19 +981,21 @@ const HandymanAdmin = () => {
                 <span>🌟</span> Active Live Projects ({liveProjects.length})
               </h2>
               <p className="text-xs text-[#aaa6c3] mt-0.5">
-                These projects are currently published live to prospective clients on mattmoniz.io/handyman.
+                Click &ldquo;Edit Project &amp; Photos&rdquo; on any card to update wording, reorder photos, or adjust card sequence on mattmoniz.io/handyman.
               </p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {liveProjects.map((project) => {
+            {liveProjects.map((project, projectIdx) => {
               const isEditing = editingLiveId === project.id;
 
               return (
                 <div
                   key={project.id}
-                  className="bg-[#151030] border border-white/10 rounded-2xl overflow-hidden flex flex-col justify-between"
+                  className={`bg-[#151030] border ${
+                    isEditing ? "border-[#915eff] md:col-span-2 lg:col-span-3" : "border-white/10"
+                  } rounded-2xl overflow-hidden flex flex-col justify-between transition-all`}
                 >
                   {/* Image Header */}
                   <div className="relative h-44 bg-black/40">
@@ -767,52 +1008,220 @@ const HandymanAdmin = () => {
                     <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-md text-[#dfd9ff] border border-white/15 text-[11px] font-semibold px-2.5 py-0.5 rounded-full">
                       {project.category}
                     </div>
-                    <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-md text-white text-[11px] px-2 py-0.5 rounded-full">
-                      📷 {project.images?.length || 1}
+                    <div className="absolute top-2 right-2 flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        disabled={projectIdx === 0}
+                        onClick={() => handleMoveLiveProjectOrder(projectIdx, -1)}
+                        className="bg-black/60 hover:bg-black/90 disabled:opacity-30 text-white text-[11px] w-6 h-6 rounded-full flex items-center justify-center border border-white/15 cursor-pointer"
+                        title="Move card earlier in gallery"
+                      >
+                        ↑
+                      </button>
+                      <button
+                        type="button"
+                        disabled={projectIdx === liveProjects.length - 1}
+                        onClick={() => handleMoveLiveProjectOrder(projectIdx, 1)}
+                        className="bg-black/60 hover:bg-black/90 disabled:opacity-30 text-white text-[11px] w-6 h-6 rounded-full flex items-center justify-center border border-white/15 cursor-pointer"
+                        title="Move card later in gallery"
+                      >
+                        ↓
+                      </button>
+                      <span className="bg-black/60 backdrop-blur-md text-white text-[11px] px-2 py-0.5 rounded-full">
+                        📷 {project.images?.length || 1}
+                      </span>
                     </div>
                   </div>
 
                   {/* Body Content */}
                   <div className="p-5 flex-1 flex flex-col justify-between gap-4">
                     {isEditing ? (
-                      <div className="space-y-3">
-                        <div>
-                          <label className="text-[10px] text-[#aaa6c3] uppercase font-bold">Title</label>
-                          <input
-                            type="text"
-                            value={project.title}
-                            onChange={(e) =>
-                              setLiveProjects((prev) =>
-                                prev.map((p) => (p.id === project.id ? { ...p, title: e.target.value } : p))
-                              )
-                            }
-                            className="w-full bg-[#050816] border border-white/15 rounded px-2.5 py-1 text-xs text-white"
-                          />
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div>
+                            <label className="text-[10px] text-[#aaa6c3] uppercase font-bold">Title</label>
+                            <input
+                              type="text"
+                              value={project.title}
+                              onChange={(e) =>
+                                setLiveProjects((prev) =>
+                                  prev.map((p) => (p.id === project.id ? { ...p, title: e.target.value } : p))
+                                )
+                              }
+                              className="w-full bg-[#050816] border border-white/15 rounded px-2.5 py-1.5 text-xs text-white"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] text-[#aaa6c3] uppercase font-bold">Category</label>
+                            <input
+                              type="text"
+                              value={project.category}
+                              onChange={(e) =>
+                                setLiveProjects((prev) =>
+                                  prev.map((p) => (p.id === project.id ? { ...p, category: e.target.value } : p))
+                                )
+                              }
+                              className="w-full bg-[#050816] border border-white/15 rounded px-2.5 py-1.5 text-xs text-white"
+                            />
+                          </div>
+                          <div className="md:col-span-2">
+                            <label className="text-[10px] text-[#aaa6c3] uppercase font-bold">Summary</label>
+                            <textarea
+                              rows={2}
+                              value={project.summary}
+                              onChange={(e) =>
+                                setLiveProjects((prev) =>
+                                  prev.map((p) => (p.id === project.id ? { ...p, summary: e.target.value } : p))
+                                )
+                              }
+                              className="w-full bg-[#050816] border border-white/15 rounded px-2.5 py-1.5 text-xs text-white"
+                            />
+                          </div>
+                          <div className="md:col-span-2">
+                            <label className="text-[10px] text-[#aaa6c3] uppercase font-bold">
+                              Detailed Description
+                            </label>
+                            <textarea
+                              rows={3}
+                              value={project.description || ""}
+                              onChange={(e) =>
+                                setLiveProjects((prev) =>
+                                  prev.map((p) =>
+                                    p.id === project.id ? { ...p, description: e.target.value } : p
+                                  )
+                                )
+                              }
+                              className="w-full bg-[#050816] border border-white/15 rounded px-2.5 py-1.5 text-xs text-white"
+                            />
+                          </div>
+                          <div className="md:col-span-2">
+                            <label className="text-[10px] text-[#aaa6c3] uppercase font-bold">
+                              Tags (comma separated)
+                            </label>
+                            <input
+                              type="text"
+                              value={(project.tags || []).join(", ")}
+                              onChange={(e) =>
+                                setLiveProjects((prev) =>
+                                  prev.map((p) =>
+                                    p.id === project.id
+                                      ? {
+                                          ...p,
+                                          tags: e.target.value
+                                            .split(",")
+                                            .map((t) => t.trim())
+                                            .filter(Boolean),
+                                        }
+                                      : p
+                                  )
+                                )
+                              }
+                              className="w-full bg-[#050816] border border-white/15 rounded px-2.5 py-1.5 text-xs text-white"
+                            />
+                          </div>
                         </div>
-                        <div>
-                          <label className="text-[10px] text-[#aaa6c3] uppercase font-bold">Summary</label>
-                          <textarea
-                            rows={2}
-                            value={project.summary}
-                            onChange={(e) =>
-                              setLiveProjects((prev) =>
-                                prev.map((p) => (p.id === project.id ? { ...p, summary: e.target.value } : p))
-                              )
-                            }
-                            className="w-full bg-[#050816] border border-white/15 rounded px-2.5 py-1 text-xs text-white"
-                          />
+
+                        {/* Live Project Photo Reordering & Caption Manager */}
+                        <div className="space-y-2 pt-2 border-t border-white/10">
+                          <label className="text-[10px] text-[#dfd9ff] uppercase font-bold block">
+                            Project Photos (Use ← / → to reorder, ★ for cover)
+                          </label>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                            {(project.images || []).map((img, imgIdx) => {
+                              const isCover = project.coverImage === img.file;
+                              const totalImgs = (project.images || []).length;
+                              return (
+                                <div
+                                  key={imgIdx}
+                                  className={`bg-[#050816] rounded-lg overflow-hidden border ${
+                                    isCover ? "border-emerald-500" : "border-white/10"
+                                  } p-2 space-y-2`}
+                                >
+                                  <div className="relative aspect-video rounded overflow-hidden bg-black/50">
+                                    <img
+                                      src={resolveHandymanImage(img.file)}
+                                      alt={img.caption || ""}
+                                      referrerPolicy="no-referrer"
+                                      className="w-full h-full object-cover"
+                                    />
+                                    <span className="absolute bottom-1 left-1 bg-black/75 text-white text-[10px] px-1.5 py-0.2 rounded">
+                                      #{imgIdx + 1}
+                                    </span>
+                                    {isCover && (
+                                      <span className="absolute top-1 left-1 bg-emerald-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">
+                                        ★ Cover
+                                      </span>
+                                    )}
+                                    {totalImgs > 1 && (
+                                      <button
+                                        type="button"
+                                        onClick={() => handleRemoveLivePhoto(project.id, imgIdx)}
+                                        className="absolute top-1 right-1 bg-black/70 hover:bg-red-500 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center cursor-pointer"
+                                        title="Remove photo from project"
+                                      >
+                                        ✕
+                                      </button>
+                                    )}
+                                  </div>
+                                  <input
+                                    type="text"
+                                    value={img.caption || ""}
+                                    onChange={(e) =>
+                                      handleUpdateLivePhotoCaption(project.id, imgIdx, e.target.value)
+                                    }
+                                    placeholder="Caption..."
+                                    className="w-full bg-[#151030] border border-white/10 rounded px-2 py-1 text-[11px] text-white"
+                                  />
+                                  <div className="flex items-center gap-1">
+                                    <button
+                                      type="button"
+                                      disabled={imgIdx === 0}
+                                      onClick={() => handleMoveLivePhotoOrder(project.id, imgIdx, -1)}
+                                      className="bg-white/5 hover:bg-white/15 disabled:opacity-30 text-white text-[11px] px-2 py-0.5 rounded cursor-pointer"
+                                    >
+                                      ←
+                                    </button>
+                                    <button
+                                      type="button"
+                                      disabled={imgIdx === totalImgs - 1}
+                                      onClick={() => handleMoveLivePhotoOrder(project.id, imgIdx, 1)}
+                                      className="bg-white/5 hover:bg-white/15 disabled:opacity-30 text-white text-[11px] px-2 py-0.5 rounded cursor-pointer"
+                                    >
+                                      →
+                                    </button>
+                                    {!isCover && (
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          setLiveProjects((prev) =>
+                                            prev.map((p) =>
+                                              p.id === project.id ? { ...p, coverImage: img.file } : p
+                                            )
+                                          )
+                                        }
+                                        className="flex-1 bg-white/5 hover:bg-white/15 text-white text-[10px] py-0.5 rounded cursor-pointer"
+                                      >
+                                        ★ Cover
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
+
                         <div className="flex gap-2 pt-2">
                           <button
-                            onClick={() => handleSaveLiveEdit(project)}
+                            onClick={handleSaveLiveEdit}
                             disabled={isPublishing}
-                            className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold py-1.5 rounded transition-all"
+                            className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold py-2 rounded-lg transition-all cursor-pointer"
                           >
-                            💾 Save & Push Live
+                            💾 Save &amp; Push Live
                           </button>
                           <button
                             onClick={() => setEditingLiveId(null)}
-                            className="bg-white/10 hover:bg-white/15 text-white text-xs px-3 py-1.5 rounded"
+                            className="bg-white/10 hover:bg-white/15 text-white text-xs px-4 py-2 rounded-lg cursor-pointer"
                           >
                             Cancel
                           </button>
@@ -831,7 +1240,7 @@ const HandymanAdmin = () => {
                             onClick={() => setEditingLiveId(project.id)}
                             className="bg-[#915eff]/20 hover:bg-[#915eff]/30 text-[#dfd9ff] border border-[#915eff]/40 text-xs font-semibold px-2.5 py-1 rounded transition-colors flex items-center gap-1 cursor-pointer"
                           >
-                            <span>✏️</span> Edit Wording
+                            <span>✏️</span> Edit Project &amp; Photos
                           </button>
                         </div>
                       </>
