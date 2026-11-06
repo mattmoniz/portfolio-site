@@ -316,15 +316,22 @@ async function main() {
   const rejectedFilesToMove = [];
   let stagedProjectsSummary = [];
 
-  // Determine Google Drive folder
-  const activeIncomingDir = fs.existsSync(config.incomingFolder)
+  // Determine Google Drive folder (fall back to repo-local incoming-photos when running in CI)
+  const hasDriveFolder = config.incomingFolder && fs.existsSync(config.incomingFolder);
+  const activeIncomingDir = hasDriveFolder
     ? config.incomingFolder
     : path.resolve(ROOT_DIR, config.fallbackFolder || "incoming-photos");
 
-  const archiveDir = config.archiveFolder || path.join(activeIncomingDir, "_processed");
-  const rejectedDir = config.rejectedFolder || path.join(archiveDir, "rejected");
+  const archiveDir =
+    hasDriveFolder && config.archiveFolder
+      ? config.archiveFolder
+      : path.join(activeIncomingDir, "_processed");
+  const rejectedDir =
+    hasDriveFolder && config.rejectedFolder
+      ? config.rejectedFolder
+      : path.join(archiveDir, "rejected");
 
-  if (!dryRun) {
+  if (!dryRun && fs.existsSync(activeIncomingDir)) {
     fs.mkdirSync(archiveDir, { recursive: true });
     fs.mkdirSync(rejectedDir, { recursive: true });
   }
