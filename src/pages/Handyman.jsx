@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   handymanProjects,
@@ -11,12 +11,38 @@ import ProjectModal from "../components/handyman/ProjectModal";
 import ProjectEditModal from "../components/handyman/ProjectEditModal";
 import InquiryForm from "../components/handyman/InquiryForm";
 
+const CLOUD_PROJECTS_URL =
+  "https://raw.githubusercontent.com/mattmoniz/portfolio-site/main/src/data/projects.json";
+
 const Handyman = () => {
   const [projectsList, setProjectsList] = useState(handymanProjects);
   const [activeCategory, setActiveCategory] = useState("All");
   const [selectedProject, setSelectedProject] = useState(null);
   const [editingProject, setEditingProject] = useState(null);
   const [inquiryType, setInquiryType] = useState("");
+
+  // Fetch latest cloud project cards & photos directly from GitHub Cloud on mount
+  useEffect(() => {
+    fetch(`${CLOUD_PROJECTS_URL}?t=${Date.now()}`, { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((rawProjects) => {
+        if (Array.isArray(rawProjects) && rawProjects.length > 0) {
+          setProjectsList(
+            rawProjects.map((p) => ({
+              ...p,
+              coverImage: resolveHandymanImage(p.coverImage),
+              rawCoverImage: p.coverImage,
+              images: (p.images || []).map((img) => ({
+                ...img,
+                file: resolveHandymanImage(img.file),
+                rawFile: img.file,
+              })),
+            }))
+          );
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Dynamically extract categories with their counts
   const categoriesWithCounts = useMemo(() => {

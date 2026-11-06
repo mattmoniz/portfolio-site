@@ -167,7 +167,23 @@ export async function handler(event, context) {
     return jsonResponse(401, { error: "Unauthorized. Session expired or invalid." });
   }
 
-  // 2. Scan Album
+  // 2. Load Latest Cloud Projects & Staged Queue
+  if (action === "load-cloud-data") {
+    try {
+      const [liveData, stagedData] = await Promise.all([
+        getGitHubFile("src/data/projects.json"),
+        getGitHubFile("src/data/stagedProjects.json"),
+      ]);
+      return jsonResponse(200, {
+        projects: liveData ? liveData.content : null,
+        stagedProjects: stagedData ? stagedData.content : null,
+      });
+    } catch (err) {
+      return jsonResponse(500, { error: "Failed to load cloud data: " + err.message });
+    }
+  }
+
+  // 3. Scan Album
   if (action === "scan-album") {
     const albumPhotos = await scrapeAlbumPhotos(body.albumUrl || DEFAULT_ALBUM_URL);
     return jsonResponse(200, {
@@ -176,7 +192,27 @@ export async function handler(event, context) {
     });
   }
 
-  // 3. Publish Approved Projects Directly to GitHub
+  // 4. Save Staged Projects Queue in Cloud
+  if (action === "save-staged") {
+    const { stagedProjects } = body;
+    if (!Array.isArray(stagedProjects)) {
+      return jsonResponse(400, { error: "Missing or invalid 'stagedProjects' array." });
+    }
+    try {
+      const stagedData = await getGitHubFile("src/data/stagedProjects.json");
+      await updateGitHubFile(
+        "src/data/stagedProjects.json",
+        stagedProjects,
+        "Update staged projects queue from online admin",
+        stagedData ? stagedData.sha : null
+      );
+      return jsonResponse(200, { success: true });
+    } catch (err) {
+      return jsonResponse(500, { error: "Failed to save staged projects: " + err.message });
+    }
+  }
+
+  // 5. Publish Approved Projects Directly to GitHub
   if (action === "publish-live") {
     const { projects, stagedProjects } = body;
     if (!projects || !Array.isArray(projects)) {
@@ -188,7 +224,7 @@ export async function handler(event, context) {
       let fileData = await getGitHubFile("src/data/projects.json");
       const sha = fileData ? fileData.sha : null;
 
-      const commitMsg = `Publish handyman updates from online admin (${new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" })}) [skip ci]`;
+      const commitMsg = `Publish handyman updates from online admin (${new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" })})`;
       await updateGitHubFile("src/data/projects.json", projects, commitMsg, sha);
 
       // Optionally update stagedProjects.json

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import initialLiveProjects from "../data/projects.json";
 import initialStagedProjects from "../data/stagedProjects.json";
+import syncedMedia from "../data/syncedMedia.json";
 import { resolveHandymanImage } from "../data/handymanProjects";
 
 const CATEGORY_PRESETS = [
@@ -43,13 +44,34 @@ const HandymanAdmin = () => {
   const [publishMessage, setPublishMessage] = useState("");
   const [editingLiveId, setEditingLiveId] = useState(null);
 
-  // Check stored session
+  // Check stored session and sync latest cloud projects & staged queue
   useEffect(() => {
     const savedToken = sessionStorage.getItem("handyman_admin_token");
     if (savedToken) {
       setIsAuthenticated(true);
     }
   }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const token = sessionStorage.getItem("handyman_admin_token") || "dev-token-verified";
+
+    fetch("/.netlify/functions/handyman-admin", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "load-cloud-data", token }),
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.projects && Array.isArray(data.projects)) {
+          setLiveProjects(data.projects);
+        }
+        if (data?.stagedProjects && Array.isArray(data.stagedProjects)) {
+          setStagedProjects(data.stagedProjects);
+        }
+      })
+      .catch(() => {});
+  }, [isAuthenticated]);
 
   // Google SSO Response Handler
   const handleGoogleResponse = async (response) => {
@@ -181,8 +203,8 @@ const HandymanAdmin = () => {
 
       const data = await res.json();
       if (res.ok && data.photos) {
-        // Collect all photos already in live projects
-        const existingLiveUrls = new Set();
+        // Collect all photos already in live projects or previously synced/rejected
+        const existingLiveUrls = new Set(syncedMedia?.seenBaseUrls || []);
         liveProjects.forEach((p) => {
           if (p.coverImage) existingLiveUrls.add(p.coverImage.split("=")[0]);
           (p.images || []).forEach((img) => existingLiveUrls.add((img.file || "").split("=")[0]));
