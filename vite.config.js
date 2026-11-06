@@ -45,20 +45,6 @@ function localProjectEditorPlugin() {
                   return res.end(JSON.stringify({ error: 'Invalid Google token' }))
                 }
 
-                if (action === 'verify-auth') {
-                  const expected = process.env.HANDYMAN_ADMIN_PIN
-                  if (expected && data.passcode === expected) {
-                    res.writeHead(200, { 'Content-Type': 'application/json' })
-                    return res.end(JSON.stringify({
-                      authenticated: true,
-                      token: 'dev-token-verified',
-                      user: { email: 'monizri@gmail.com', name: 'Matthew Moniz' }
-                    }))
-                  }
-                  res.writeHead(401, { 'Content-Type': 'application/json' })
-                  return res.end(JSON.stringify({ error: 'Invalid passcode' }))
-                }
-
                 if (action === 'scan-album') {
                   const albumUrl = data.albumUrl || 'https://photos.app.goo.gl/rzsCye2XgjAZUvW69'
                   const resp = await fetch(albumUrl, { redirect: 'follow' })

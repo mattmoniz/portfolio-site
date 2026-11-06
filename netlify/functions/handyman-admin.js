@@ -3,7 +3,6 @@ import crypto from "crypto";
 const DEFAULT_ALBUM_URL = "https://photos.app.goo.gl/rzsCye2XgjAZUvW69";
 const GITHUB_REPO = "mattmoniz/portfolio-site";
 const GITHUB_BRANCH = "main";
-const ADMIN_PIN = process.env.HANDYMAN_ADMIN_PIN || "";
 const ADMIN_ALLOWED_EMAIL = process.env.ADMIN_ALLOWED_EMAIL || "monizri@gmail.com";
 const GOOGLE_CLIENT_ID =
   process.env.VITE_GOOGLE_CLIENT_ID ||
@@ -19,7 +18,7 @@ const ALLOWED_ORIGINS = new Set([
 ]);
 
 function getSessionSecret() {
-  const secret = process.env.ADMIN_SESSION_SECRET || GITHUB_TOKEN || ADMIN_PIN;
+  const secret = process.env.ADMIN_SESSION_SECRET || GITHUB_TOKEN;
   if (!secret) {
     throw new Error("Server authentication secret is not configured in environment.");
   }
@@ -220,30 +219,7 @@ export async function handler(event) {
     }
   }
 
-  // 2. Verify Passcode (Only active if HANDYMAN_ADMIN_PIN is configured in Netlify env vars)
-  if (action === "verify-auth") {
-    const { passcode } = body;
-    if (!ADMIN_PIN) {
-      return jsonResponse(
-        401,
-        { error: "Passcode login is disabled. Please sign in with Google." },
-        origin
-      );
-    }
-    const passBuf = Buffer.from(String(passcode || ""));
-    const expectedBuf = Buffer.from(String(ADMIN_PIN));
-    if (passBuf.length === expectedBuf.length && crypto.timingSafeEqual(passBuf, expectedBuf)) {
-      const token = createSignedSessionToken(ADMIN_ALLOWED_EMAIL);
-      return jsonResponse(
-        200,
-        { authenticated: true, token, user: { email: ADMIN_ALLOWED_EMAIL, name: "Admin" } },
-        origin
-      );
-    }
-    return jsonResponse(401, { error: "Invalid passcode. Please try again." }, origin);
-  }
-
-  // Auth check for all other administrative actions
+  // Auth check for all other administrative actions (Google SSO strictly required)
   const authHeader = event.headers?.authorization || event.headers?.Authorization || body.token;
   if (!verifySignedSessionToken(authHeader)) {
     return jsonResponse(401, { error: "Unauthorized. Session expired or invalid." }, origin);

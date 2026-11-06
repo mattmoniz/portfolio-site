@@ -144,6 +144,10 @@ function checkAdminFunctionHardening() {
       ok: code.includes("timingSafeEqual"),
     },
     {
+      name: "Google SSO-Only Authentication (No Passcode Fallback)",
+      ok: !code.includes("verify-auth") && !code.includes("ADMIN_PIN"),
+    },
+    {
       name: "Google OAuth email_verified & Audience (aud) Verification",
       ok: code.includes("payload.email_verified") && code.includes("payload.aud"),
     },
