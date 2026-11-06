@@ -9,6 +9,7 @@
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "sync-photos": "node scripts/sync-google-photos.js",
+    "security-scan": "node scripts/security-watchdog.js --live",
     "publish": "git add -A && git commit -m \"Update site content $(date +'%Y-%m-%d %H:%M')\" && git push origin main",
     "deploy": "npm run publish"
   },

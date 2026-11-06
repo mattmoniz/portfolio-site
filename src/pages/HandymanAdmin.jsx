@@ -17,7 +17,7 @@ const CATEGORY_PRESETS = [
 const HandymanAdmin = () => {
   // Auth state
   const [isAuthenticated, setIsAuthenticated] = useState(
-    () => typeof window !== "undefined" && (Boolean(sessionStorage.getItem("handyman_admin_token")) || new URLSearchParams(window.location.search).get("key") === "matt2026")
+    () => typeof window !== "undefined" && Boolean(sessionStorage.getItem("handyman_admin_token"))
   );
   const [user, setUser] = useState(() => {
     try {
@@ -164,14 +164,8 @@ const HandymanAdmin = () => {
       } else {
         setAuthError(data.error || "Incorrect passcode. Please try again.");
       }
-    } catch (err) {
-      if (passcode === "matt2026") {
-        sessionStorage.setItem("handyman_admin_token", "dev-token-verified");
-        setUser({ email: "monizri@gmail.com", name: "Matthew Moniz" });
-        setIsAuthenticated(true);
-      } else {
-        setAuthError("Failed to verify passcode. Please check connection.");
-      }
+    } catch {
+      setAuthError("Failed to verify passcode. Please check connection.");
     } finally {
       setIsVerifying(false);
     }

@@ -1,0 +1,37 @@
+name: Cloud Security Watchdog
+
+on:
+  # Run on every push and pull request
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  # Run every 6 hours in the cloud as an always-on security & live-site watchdog
+  schedule:
+    - cron: '30 */6 * * *'
+  # Allow manual trigger anytime from GitHub Actions UI
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  security-audit:
+    name: Security & Live Penetration Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Run Cloud Security Watchdog (SAST, Secrets, Headers & Live Probe)
+        run: |
+          node scripts/security-watchdog.js --live
+
+      - name: Run NPM Dependency Vulnerability Audit (Critical CVEs)
+        run: |
+          npm audit --omit=dev --audit-level=critical

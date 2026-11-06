@@ -46,8 +46,8 @@ function localProjectEditorPlugin() {
                 }
 
                 if (action === 'verify-auth') {
-                  const expected = process.env.HANDYMAN_ADMIN_PIN || 'matt2026'
-                  if (data.passcode === expected) {
+                  const expected = process.env.HANDYMAN_ADMIN_PIN
+                  if (expected && data.passcode === expected) {
                     res.writeHead(200, { 'Content-Type': 'application/json' })
                     return res.end(JSON.stringify({
                       authenticated: true,
